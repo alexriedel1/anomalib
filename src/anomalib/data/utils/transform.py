@@ -82,17 +82,17 @@ def get_transforms(
     transforms: A.Compose
 
     if config is not None:
-        logger.info(config)
         if config.sweep:
             transforms_list = []
-            config.pop("sweep")
             for key, value in config.items():
-                transform = getattr(A, key)(**value)
-                transforms_list.append(transform)
-                print(transform)
+                if key != "sweep":
+                  transform = getattr(A, key)(**value)
+                  transforms_list.append(transform)
             
+            transforms_list.append(A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)))
             transforms_list.append(ToTensorV2())
             transforms = A.Compose(transforms_list, additional_targets={"image": "image", "depth_image": "image"})
+            logger.info(transforms)
             """A.Compose(
                 [
                     A.Resize(height=config.dataset.image_size[0], width=config.dataset.image_size[0], always_apply=True),

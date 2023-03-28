@@ -6,8 +6,25 @@ metric:
 parameters:
   dataset:
     category: capsule
-    image_size:
-      values: [128, 256]
-  model:
-    backbone:
-      values: [resnet18, wide_resnet50_2]
+    transform_config:
+        train:
+          Resize:
+            height: 256
+            width: 256
+          HorizontalFlip:
+            p:
+              values: [0, 0.5]
+          VerticalFlip:
+            p:
+              values: [0, 0.5]
+          RandomBrightnessContrast:
+            p: 0
+          ShiftScaleRotate:
+            p: 0
+          ToGray:
+            p:
+              values: [0, 1.0]
+          Blur:
+            blur_limit:
+              values: [[3,3], [5,5]]
+            always_apply: true

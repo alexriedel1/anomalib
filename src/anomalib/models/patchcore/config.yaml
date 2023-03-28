@@ -13,6 +13,17 @@ dataset:
   transform_config:
     train:
       sweep: true
+      Resize:
+        height: 256
+        width: 256
+      HorizontalFlip:
+        p: 0
+      VerticalFlip:
+        p: 0
+      RandomBrightnessContrast:
+        p: 0
+      ShiftScaleRotate:
+        p: 0
       ToGray:
         p: 0
       Blur:
