@@ -28,8 +28,8 @@ dataset:
         p: 0
       Blur:
         blur_limit:
-          - 0
-          - 0
+          - 1
+          - 1
         always_apply: true
 
     eval:
@@ -50,8 +50,8 @@ dataset:
       Blur:
         p: 0
         blur_limit:
-          - 3
-          - 3
+          - 1
+          - 1
         always_apply: true
         
   test_split_mode: from_dir # options: [from_dir, synthetic]
