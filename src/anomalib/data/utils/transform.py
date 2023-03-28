@@ -82,7 +82,7 @@ def get_transforms(
     transforms: A.Compose
 
     if config is not None:
-        print(config)
+        logger.info(config)
         if config.sweep:
             transforms_list = []
             print("SWEEEEP TRANSFROMS")
