@@ -1,8 +1,9 @@
 observation_budget: 20
 method: bayes
+name: patchcore_1
 metric:
-  name: pixel_AUROC
-  goal: maximize
+  name: image_MeanSquaredError
+  goal: minimize
 parameters:
   dataset:
     category: capsule
