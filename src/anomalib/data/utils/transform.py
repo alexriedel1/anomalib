@@ -93,7 +93,6 @@ def get_transforms(
             transforms_list.append(A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)))
             transforms_list.append(ToTensorV2())
             transforms = A.Compose(transforms_list, additional_targets={"image": "image", "depth_image": "image"})
-            logger.info(transforms)
 
         # load transforms from config file
         elif isinstance(config, str):
