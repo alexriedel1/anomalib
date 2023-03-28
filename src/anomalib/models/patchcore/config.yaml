@@ -16,6 +16,7 @@ dataset:
       Resize:
         height: 256
         width: 256
+        always_apply: true
       HorizontalFlip:
         p: 0
       VerticalFlip:
@@ -38,6 +39,7 @@ dataset:
       Resize:
         height: 256
         width: 256
+        always_apply: true
       HorizontalFlip:
         p: 0
       VerticalFlip:
