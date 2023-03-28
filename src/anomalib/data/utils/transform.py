@@ -82,10 +82,10 @@ def get_transforms(
     transforms: A.Compose
 
     if config is not None:
-        if config.sweep:
+        if config.aug_from_conf:
             transforms_list = []
             for key, value in config.items():
-                if key != "sweep":
+                if key != "aug_from_conf":
                   transform = getattr(A, key)(**value)
                   transforms_list.append(transform)
             

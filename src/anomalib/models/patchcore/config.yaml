@@ -12,7 +12,7 @@ dataset:
   normalization: imagenet # data distribution to which the images will be normalized: [none, imagenet]
   transform_config:
     train:
-      sweep: true
+      aug_from_conf: true
       Resize:
         height: 256
         width: 256
@@ -33,7 +33,7 @@ dataset:
         always_apply: true
 
     eval:
-      sweep: true
+      aug_from_conf: true
       Resize:
         height: 256
         width: 256
@@ -48,9 +48,10 @@ dataset:
       ToGray:
         p: 0
       Blur:
+        p: 0
         blur_limit:
-          - 0
-          - 0
+          - 3
+          - 3
         always_apply: true
         
   test_split_mode: from_dir # options: [from_dir, synthetic]
