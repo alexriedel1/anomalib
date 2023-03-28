@@ -137,5 +137,7 @@ def get_transforms(
             transforms_list.append(ToTensorV2())
 
         transforms = A.Compose(transforms_list, additional_targets={"image": "image", "depth_image": "image"})
+    
+    logger.warn(transforms)
 
     return transforms
