@@ -69,14 +69,16 @@ class WandbSweep:
         for param in sweep_config.keys():
             set_in_nested_config(self.config, param.split("."), sweep_config[param])
         config = update_input_size_config(self.config)
+        
+        config.dataset.transform_config.eval.Resize = config.dataset.transform_config.train.Resize
+        config.dataset.transform_config.eval.ToGray = config.dataset.transform_config.train.ToGray
+        config.dataset.transform_config.eval.Blur = config.dataset.transform_config.train.Blur
 
         model = get_model(config)
         datamodule = get_datamodule(config)
         callbacks = get_sweep_callbacks(config)
 
-        config.dataset.transform_config.eval.Resize = config.dataset.transform_config.train.Resize
-        config.dataset.transform_config.eval.ToGray = config.dataset.transform_config.train.ToGray
-        config.dataset.transform_config.eval.Blur = config.dataset.transform_config.train.Blur
+
 
         # Disable saving checkpoints as all checkpoints from the sweep will get uploaded
         config.trainer.enable_checkpointing = False
