@@ -85,8 +85,10 @@ def get_transforms(
         logger.info(config)
         if config.sweep:
             transforms_list = []
-            print("SWEEEEP TRANSFROMS")
-            print(config)
+            config.pop("sweep")
+            for key, value in config.items():
+                transform = getattr(A, key)(**value)
+                print(transform)
             """A.Compose(
                 [
                     A.Resize(height=config.dataset.image_size[0], width=config.dataset.image_size[0], always_apply=True),
