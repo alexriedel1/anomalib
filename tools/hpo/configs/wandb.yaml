@@ -28,3 +28,5 @@ parameters:
             blur_limit:
               values: [[3,3], [5,5]]
             always_apply: true
+            p: 
+              values: [0, 1]

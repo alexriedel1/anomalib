@@ -27,6 +27,7 @@ dataset:
       ToGray:
         p: 0
       Blur:
+        p: 0
         blur_limit:
           - 1
           - 1
