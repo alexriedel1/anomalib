@@ -32,7 +32,27 @@ dataset:
           - 0
         always_apply: true
 
-    eval: null
+    eval:
+      sweep: true
+      Resize:
+        height: 256
+        width: 256
+      HorizontalFlip:
+        p: 0
+      VerticalFlip:
+        p: 0
+      RandomBrightnessContrast:
+        p: 0
+      ShiftScaleRotate:
+        p: 0
+      ToGray:
+        p: 0
+      Blur:
+        blur_limit:
+          - 0
+          - 0
+        always_apply: true
+        
   test_split_mode: from_dir # options: [from_dir, synthetic]
   test_split_ratio: 0.2 # fraction of train images held out testing (usage depends on test_split_mode)
   val_split_mode: same_as_test # options: [same_as_test, from_test, synthetic]

@@ -20,6 +20,10 @@ from anomalib.utils.sweep import (
     set_in_nested_config,
 )
 
+import gc
+import torch
+
+
 from .config import flatten_hpo_params
 
 
@@ -76,6 +80,10 @@ class WandbSweep:
 
         trainer = pl.Trainer(**config.trainer, logger=wandb_logger, callbacks=callbacks)
         trainer.fit(model, datamodule=datamodule)
+
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()
 
 
 class CometSweep:
