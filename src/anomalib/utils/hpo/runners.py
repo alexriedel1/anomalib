@@ -74,6 +74,8 @@ class WandbSweep:
         config.dataset.transform_config.eval.ToGray = config.dataset.transform_config.train.ToGray
         config.dataset.transform_config.eval.Blur = config.dataset.transform_config.train.Blur
 
+        print(config)
+
         model = get_model(config)
         datamodule = get_datamodule(config)
         callbacks = get_sweep_callbacks(config)

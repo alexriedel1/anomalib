@@ -83,6 +83,7 @@ def get_transforms(
 
     if config is not None:
         if config.aug_from_conf:
+            logger.info("Transforms loaded from Config File")
             transforms_list = []
             for key, value in config.items():
                 if key != "aug_from_conf":
@@ -93,23 +94,6 @@ def get_transforms(
             transforms_list.append(ToTensorV2())
             transforms = A.Compose(transforms_list, additional_targets={"image": "image", "depth_image": "image"})
             logger.info(transforms)
-            """A.Compose(
-                [
-                    A.Resize(height=config.dataset.image_size[0], width=config.dataset.image_size[0], always_apply=True),
-                    A.HorizontalFlip(p=0.3),
-                    A.VerticalFlip(p=0.3),
-                    A.ElasticTransform(alpha =1.3, sigma=17, alpha_affine =12, p=0.2),
-                    A.Perspective(),
-                    A.ShiftScaleRotate(p=0.2),
-                    A.ToGray(always_apply=True),
-                    A.RandomBrightnessContrast(p=0.3),
-                    A.Blur(blur_limit=[3,3], always_apply=True),
-                    A.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-                    ToTensorV2(),
-                    additional_targets={"image": "image", "depth_image": "image"}
-                ])"""
-
-
 
         # load transforms from config file
         elif isinstance(config, str):
