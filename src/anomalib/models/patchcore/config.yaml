@@ -11,7 +11,16 @@ dataset:
   center_crop: 224 # dimensions to which images are center-cropped after resizing (optional)
   normalization: imagenet # data distribution to which the images will be normalized: [none, imagenet]
   transform_config:
-    train: null
+    train:
+      sweep: true
+      ToGray:
+        p: 0
+      Blur:
+        blur_limit:
+          - 0
+          - 0
+        always_apply: true
+
     eval: null
   test_split_mode: from_dir # options: [from_dir, synthetic]
   test_split_ratio: 0.2 # fraction of train images held out testing (usage depends on test_split_mode)
@@ -40,6 +49,7 @@ metrics:
   image:
     - F1Score
     - AUROC
+    - MeanSquaredError
   pixel:
     - F1Score
     - AUROC

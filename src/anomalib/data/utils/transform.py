@@ -88,7 +88,11 @@ def get_transforms(
             config.pop("sweep")
             for key, value in config.items():
                 transform = getattr(A, key)(**value)
+                transforms_list.append(transform)
                 print(transform)
+            
+            transforms_list.append(ToTensorV2())
+            transforms = A.Compose(transforms_list, additional_targets={"image": "image", "depth_image": "image"})
             """A.Compose(
                 [
                     A.Resize(height=config.dataset.image_size[0], width=config.dataset.image_size[0], always_apply=True),
