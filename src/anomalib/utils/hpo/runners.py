@@ -23,7 +23,6 @@ from anomalib.utils.sweep import (
 import gc
 import torch
 
-
 from .config import flatten_hpo_params
 
 
@@ -74,6 +73,10 @@ class WandbSweep:
         model = get_model(config)
         datamodule = get_datamodule(config)
         callbacks = get_sweep_callbacks(config)
+
+        config.dataset.transform_config.eval.Resize = config.dataset.transform_config.train.Resize
+        config.dataset.transform_config.eval.ToGray = config.dataset.transform_config.train.ToGray
+        config.dataset.transform_config.eval.Blur = config.dataset.transform_config.train.Blur
 
         # Disable saving checkpoints as all checkpoints from the sweep will get uploaded
         config.trainer.enable_checkpointing = False
