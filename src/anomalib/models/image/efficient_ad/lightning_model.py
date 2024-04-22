@@ -300,9 +300,14 @@ class EfficientAd(AnomalyModule):
         if self.test_time_augmentation:
             image_batch_lr = torch.fliplr(batch["image"])
             anomaly_map_lr = self.model(image_batch_lr)["anomaly_map"]
-            anomaly_map_aug = torch.fliplr(anomaly_map_lr)
+            anomaly_map_aug_lr = torch.fliplr(anomaly_map_lr)
 
-            batch["anomaly_maps"] = 0.5 * anomaly_map_aug + 0.5 * anomaly_map
+            image_batch_ud = torch.flipud(batch["image"])
+            anomaly_map_ud = self.model(image_batch_ud)["anomaly_map"]
+            anomaly_map_aug_ud = torch.flipud(anomaly_map_ud)
+
+
+            batch["anomaly_maps"] = 1/3 * anomaly_map_aug_lr + 1/3 * anomaly_map_aug_ud  + 1/3 * anomaly_map
         
 
         return batch
