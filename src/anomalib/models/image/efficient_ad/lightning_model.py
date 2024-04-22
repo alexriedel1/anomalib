@@ -306,8 +306,12 @@ class EfficientAd(AnomalyModule):
             anomaly_map_ud = self.model(image_batch_ud)["anomaly_map"]
             anomaly_map_aug_ud = torch.flipud(anomaly_map_ud)
 
+            image_batch_ud_lr = torch.flipud(image_batch_lr)
+            anomaly_map_ud_lr = self.model(image_batch_ud_lr)["anomaly_map"]
+            anomaly_map_aug_ud_lr = torch.fliplr(torch.flipud(anomaly_map_ud_lr))
 
-            batch["anomaly_maps"] = 1/3 * anomaly_map_aug_lr + 1/3 * anomaly_map_aug_ud  + 1/3 * anomaly_map
+
+            batch["anomaly_maps"] = 0.25 * anomaly_map_aug_lr + 0.25 * anomaly_map_aug_ud + 0.25 * anomaly_map_aug_ud_lr + 0.25 * anomaly_map
         
 
         return batch
