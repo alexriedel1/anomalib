@@ -413,20 +413,15 @@ class EfficientAdModel(nn.Module):
                 keepdim=True,
             )
 
+        if self.pad_maps:
+            map_st = F.pad(map_st, (4, 4, 4, 4))
+            map_stae = F.pad(map_stae, (4, 4, 4, 4))
+        map_st = F.interpolate(map_st, size=image_size, mode="bilinear")
+        map_stae = F.interpolate(map_stae, size=image_size, mode="bilinear")
 
         if self.is_set(self.quantiles) and normalize:
             map_st = 0.1 * (map_st - self.quantiles["qa_st"]) / (self.quantiles["qb_st"] - self.quantiles["qa_st"])
             map_stae = 0.1 * (map_stae - self.quantiles["qa_ae"]) / (self.quantiles["qb_ae"] - self.quantiles["qa_ae"])
 
         map_combined = 0.5 * map_st + 0.5 * map_stae
-       
-        if self.pad_maps:
-            map_combined = F.pad(map_combined, (4, 4, 4, 4))
-        
-        map_combined = F.interpolate(map_combined, size=image_size, mode="bilinear")
-        #map_stae = F.interpolate(map_stae, size=image_size, mode="bilinear")
-
-        
-        
-
         return {"anomaly_map": map_combined, "map_st": map_st, "map_ae": map_stae}
