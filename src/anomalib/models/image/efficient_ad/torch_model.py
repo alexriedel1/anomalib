@@ -420,7 +420,7 @@ class EfficientAdModel(nn.Module):
 
         map_combined = 0.5 * map_st + 0.5 * map_stae
 
-         self.pad_maps:
+        self.pad_maps:
             map_combined = F.pad(map_combined, (4, 4, 4, 4))
 
         map_combined = F.interpolate(map_combined, size=image_size, mode="bilinear")
