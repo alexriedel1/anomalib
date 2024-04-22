@@ -119,13 +119,13 @@ class Patchcore(MemoryBankMixin, AnomalyModule):
             res_ud = self.model(image_batch_ud)
             anomaly_map_aug_ud = torch.flipud(res_ud["anomaly_map"])
 
-            image_batch_ud_lr = torch.flipud(image_batch_lr)
-            res_ud_lr = self.model(image_batch_ud_lr)
-            anomaly_map_aug_ud_lr = torch.fliplr(torch.flipud(res_ud_lr["anomaly_map"]))
+            #image_batch_ud_lr = torch.flipud(image_batch_lr)
+            #res_ud_lr = self.model(image_batch_ud_lr)
+            #anomaly_map_aug_ud_lr = torch.fliplr(torch.flipud(res_ud_lr["anomaly_map"]))
 
 
-            batch["anomaly_maps"] = 0.25 * anomaly_map_aug_lr + 0.25 * anomaly_map_aug_ud + 0.25 * anomaly_map_aug_ud_lr + 0.25 * output["anomaly_map"]
-            batch["pred_scores"] = 0.25 * output["pred_score"] + 0.25 * res_lr["pred_score"] + 0.25 * res_ud["pred_score"] + 0.25 * res_ud_lr["pred_score"]
+            batch["anomaly_maps"] = 1/3 * anomaly_map_aug_lr + 1/3 * anomaly_map_aug_ud + 1/3 * output["anomaly_map"] #+ 2.5 * anomaly_map_aug_ud_lr 
+            batch["pred_scores"] = 1/3 * output["pred_score"] + 1/3 * res_lr["pred_score"] + 1/3 * res_ud["pred_score"]#+ 0.25 * res_ud_lr["pred_score"]
 
         # Add anomaly maps and predicted scores to the batch.
         
