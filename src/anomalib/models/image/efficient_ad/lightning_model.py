@@ -67,16 +67,19 @@ class EfficientAd(AnomalyModule):
         imagenet_dir: Path | str = "./datasets/imagenette",
         teacher_out_channels: int = 384,
         model_size: EfficientAdModelSize = EfficientAdModelSize.S,
+        pre_trained_model_dir = ""
         lr: float = 0.0001,
         weight_decay: float = 0.00001,
         padding: bool = False,
         pad_maps: bool = True,
         batch_size: int = 1,
+
     ) -> None:
         super().__init__()
 
         self.imagenet_dir = Path(imagenet_dir)
         self.model_size = model_size
+        self.pre_trained_model_dir = pre_trained_model_dir
         self.model: EfficientAdModel = EfficientAdModel(
             teacher_out_channels=teacher_out_channels,
             model_size=model_size,
@@ -89,14 +92,8 @@ class EfficientAd(AnomalyModule):
 
     def prepare_pretrained_model(self) -> None:
         """Prepare the pretrained teacher model."""
-        pretrained_models_dir = Path("./pre_trained/")
-        if not (pretrained_models_dir / "efficientad_pretrained_weights").is_dir():
-            download_and_extract(pretrained_models_dir, WEIGHTS_DOWNLOAD_INFO)
-        teacher_path = (
-            pretrained_models_dir / "efficientad_pretrained_weights" / f"pretrained_teacher_{self.model_size.value}.pth"
-        )
-        logger.info(f"Load pretrained teacher model from {teacher_path}")
-        self.model.teacher.load_state_dict(torch.load(teacher_path, map_location=torch.device(self.device)))
+        logger.info(f"Load pretrained teacher model from {self.pre_trained_model_dir}")
+        self.model.teacher.load_state_dict(torch.load(self.pre_trained_model_dir, map_location=torch.device(self.device)))
 
     def prepare_imagenette_data(self, image_size: tuple[int, int] | torch.Size) -> None:
         """Prepare ImageNette dataset transformations.
@@ -313,12 +310,12 @@ class EfficientAd(AnomalyModule):
         """
         return LearningType.ONE_CLASS
 
-    def configure_transforms(self, image_size: tuple[int, int] | None = None) -> Transform:
-        """Default transform for Padim."""
-        image_size = image_size or (256, 256)
-        return Compose(
-            [
-                Resize(image_size, antialias=True),
-                Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ],
-        )
+    #def configure_transforms(self, image_size: tuple[int, int] | None = None) -> Transform:
+    #    """Default transform for Padim."""
+    #    image_size = image_size or (256, 256)
+    #    return Compose(
+    #        [
+    #            Resize(image_size, antialias=True),
+    #            Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    #        ],
+    #    )
