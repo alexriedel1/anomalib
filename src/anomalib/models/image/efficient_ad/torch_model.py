@@ -425,4 +425,4 @@ class EfficientAdModel(nn.Module):
 
         map_combined = F.interpolate(map_combined, size=image_size, mode="bilinear")
 
-        return {"anomaly_map": map_combined}
+        return {"anomaly_map": map_combined, "map_st": map_st, "map_ae": map_stae}
