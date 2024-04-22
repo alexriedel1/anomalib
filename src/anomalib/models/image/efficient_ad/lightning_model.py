@@ -276,8 +276,9 @@ class EfficientAd(AnomalyModule):
 
     def on_validation_start(self) -> None:
         """Calculate the feature map quantiles of the validation dataset and push to the model."""
-        map_norm_quantiles = self.map_norm_quantiles(self.trainer.datamodule.val_dataloader())
-        self.model.quantiles.update(map_norm_quantiles)
+        if (self.current_epoch + 1) == self.trainer.max_epochs:
+            map_norm_quantiles = self.map_norm_quantiles(self.trainer.datamodule.val_dataloader())
+            self.model.quantiles.update(map_norm_quantiles)
 
     def validation_step(self, batch: dict[str, str | torch.Tensor], *args, **kwargs) -> STEP_OUTPUT:
         """Perform the validation step of EfficientAd returns anomaly maps for the input image batch.
