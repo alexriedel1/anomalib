@@ -67,7 +67,7 @@ class EfficientAd(AnomalyModule):
         imagenet_dir: Path | str = "./datasets/imagenette",
         teacher_out_channels: int = 384,
         model_size: EfficientAdModelSize = EfficientAdModelSize.S,
-        pre_trained_model_dir = ""
+        pre_trained_model_dir = "",
         lr: float = 0.0001,
         weight_decay: float = 0.00001,
         padding: bool = False,
