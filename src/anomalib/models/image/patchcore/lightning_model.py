@@ -105,10 +105,28 @@ class Patchcore(MemoryBankMixin, AnomalyModule):
 
         # Get anomaly maps and predicted scores from the model.
         output = self.model(batch["image"])
-
-        # Add anomaly maps and predicted scores to the batch.
         batch["anomaly_maps"] = output["anomaly_map"]
         batch["pred_scores"] = output["pred_score"]
+
+        if self.test_time_augmentation:
+            image_batch_lr = torch.fliplr(batch["image"])
+            res_lr = self.model(image_batch_lr)
+            anomaly_map_aug_lr = torch.fliplr(res_lr["anomaly_map"])
+
+            image_batch_ud = torch.flipud(batch["image"])
+            res_ud = self.model(image_batch_ud)
+            anomaly_map_aug_ud = torch.flipud(res_ud["anomaly_map"])
+
+            image_batch_ud_lr = torch.flipud(image_batch_lr)
+            res_ud_lr = self.model(image_batch_ud_lr)
+            anomaly_map_aug_ud_lr = torch.fliplr(torch.flipud(res_ud_lr["anomaly_map"]))
+
+
+            batch["anomaly_maps"] = 0.25 * anomaly_map_aug_lr + 0.25 * anomaly_map_aug_ud + 0.25 * anomaly_map_aug_ud_lr + 0.25 * output["anomaly_map"]
+            batch["pred_scores"] = 0.25 * output["pred_score"] + 0.25 * res_lr["pred_score"] + 0.25 * res_ud["pred_score"] + 0.25 * res_ud_lr["pred_score"]
+
+        # Add anomaly maps and predicted scores to the batch.
+        
 
         return batch
 
