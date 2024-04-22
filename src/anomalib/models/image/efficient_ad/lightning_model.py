@@ -73,6 +73,7 @@ class EfficientAd(AnomalyModule):
         padding: bool = False,
         pad_maps: bool = True,
         batch_size: int = 1,
+        test_time_augmentation: bool = False
 
     ) -> None:
         super().__init__()
@@ -86,6 +87,7 @@ class EfficientAd(AnomalyModule):
             padding=padding,
             pad_maps=pad_maps,
         )
+        self.test_time_augmentation = test_time_augmentation
         self.batch_size = batch_size
         self.lr = lr
         self.weight_decay = weight_decay
@@ -292,7 +294,16 @@ class EfficientAd(AnomalyModule):
         """
         del args, kwargs  # These variables are not used.
 
-        batch["anomaly_maps"] = self.model(batch["image"])["anomaly_map"]
+        anomaly_map =  self.model(batch["image"])["anomaly_map"]
+        batch["anomaly_maps"] = anomaly_map
+
+        if self.test_time_augmentation:
+            image_batch_lr = torch.fliplr(batch["image"])
+            anomaly_map_lr = self.model(image_batch_lr)["anomaly_map"]
+            anomaly_map_aug = torch.fliplr(anomaly_map_lr)
+
+            batch["anomaly_maps"] = 0.5 * anomaly_map_aug + 0.5 * anomaly_map
+        
 
         return batch
 
