@@ -135,7 +135,7 @@ class Patchcore(MemoryBankMixin, AnomalyModule):
     @property
     def trainer_arguments(self) -> dict[str, Any]:
         """Return Patchcore trainer arguments."""
-        return {"gradient_clip_val": 0, "max_epochs": 1, "num_sanity_val_steps": 0}
+        return {"gradient_clip_val": 0, "num_sanity_val_steps": 0}
 
     @property
     def learning_type(self) -> LearningType:
