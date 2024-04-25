@@ -58,35 +58,6 @@ class PatchcoreModel(DynamicBufferMixin, nn.Module):
         self.register_buffer("memory_bank", torch.Tensor())
         self.memory_bank: torch.Tensor
     
-    def get_embeddings(self, features):
-        features = {layer: self.feature_pooler(feature) for layer, feature in features.items()}
-        embedding = self.generate_embedding(features)
-
-        if self.tiler:
-            embedding = self.tiler.untile(embedding)
-
-        batch_size, _, width, height = embedding.shape
-        embedding = self.reshape_embedding(embedding)
-
-        return embedding
-
-    def get_anomaly_map_score(self, embedding, batch_size, width, height, output_size):
-        # apply nearest neighbor search
-        patch_scores, locations = self.nearest_neighbors(embedding=embedding, n_neighbors=1)
-        # reshape to batch dimension
-        patch_scores = patch_scores.reshape((batch_size, -1))
-        locations = locations.reshape((batch_size, -1))
-        # compute anomaly score
-        pred_score = self.compute_anomaly_score(patch_scores, locations, embedding)
-        # reshape to w, h
-        patch_scores = patch_scores.reshape((batch_size, 1, width, height))
-        # get anomaly map
-        anomaly_map = self.anomaly_map_generator(patch_scores, output_size)
-
-        return anomaly_map, pred_score
-
-
-
     def forward(self, input_tensor: torch.Tensor) -> torch.Tensor | dict[str, torch.Tensor]:
         """Return Embedding during training, or a tuple of anomaly map and anomaly score during testing.
 
@@ -105,29 +76,32 @@ class PatchcoreModel(DynamicBufferMixin, nn.Module):
         if self.tiler:
             input_tensor = self.tiler.tile(input_tensor)
 
-        
-
         with torch.no_grad():
             features = self.feature_extractor(input_tensor)
-        
-        embedding = self.get_embeddings(features)
-        
-        if self.test_time_augmentation:
-            features_lr = self.feature_extractor(torch.fliplr(input_tensor))
-            features_ud = self.feature_extractor(torch.flipud(input_tensor))
-            embedding_lr = self.get_embeddings(features_lr)
-            embedding_ud = self.get_embeddings(features_ud)
+
+        features = {layer: self.feature_pooler(feature) for layer, feature in features.items()}
+        embedding = self.generate_embedding(features)
+
+        if self.tiler:
+            embedding = self.tiler.untile(embedding)
+
+        batch_size, _, width, height = embedding.shape
+        embedding = self.reshape_embedding(embedding)
 
         if self.training:
             output = embedding
         else:
-            anomaly_map, pred_score = self.get_anomaly_map_score(embedding)
-            if self.test_time_augmentation:
-                anomaly_map_lr, pred_score_lr = self.get_anomaly_map_score(embedding_lr)
-                anomaly_map_ud, pred_score_ud = self.get_anomaly_map_score(embedding_ud)
-                anomaly_map = (anomaly_map + anomaly_map_lr + anomaly_map_ud) / 3
-                pred_score = (pred_score + pred_score_lr + pred_score_ud) / 3
-
+            # apply nearest neighbor search
+            patch_scores, locations = self.nearest_neighbors(embedding=embedding, n_neighbors=1)
+            # reshape to batch dimension
+            patch_scores = patch_scores.reshape((batch_size, -1))
+            locations = locations.reshape((batch_size, -1))
+            # compute anomaly score
+            pred_score = self.compute_anomaly_score(patch_scores, locations, embedding)
+            # reshape to w, h
+            patch_scores = patch_scores.reshape((batch_size, 1, width, height))
+            # get anomaly map
+            anomaly_map = self.anomaly_map_generator(patch_scores, output_size)
 
             output = {"anomaly_map": anomaly_map, "pred_score": pred_score}
 
