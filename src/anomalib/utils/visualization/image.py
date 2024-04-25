@@ -136,11 +136,19 @@ class ImageVisualizer(BaseVisualizer):
         Returns:
             Generator that yields a display-ready visualization for each image.
         """
+        from torchvision.transforms.v2 import Normalize
+        import torch
+
+        mean =  torch.tensor([0.485, 0.456, 0.406], dtype=torch.float32)
+        std =  torch.tensor([0.229, 0.224, 0.225], dtype=torch.float32)
+        denorm = Normalize((-mean / std).tolist(), (1.0 / std).tolist())
+        
         batch_size = batch["image"].shape[0]
         for i in range(batch_size):
             if "image_path" in batch:
                 height, width = batch["image"].shape[-2:]
-                image = (read_image(path=batch["image_path"][i]) * 255).astype(np.uint8)
+                image = (denorm(batch["image"][i])*255).cpu().numpy().astype(np.uint8) #(read_image(path=batch["image_path"][i]) * 255).astype(np.uint8)
+                image = np.transpose(image, (1, 2, 0))
                 image = cv2.resize(image, dsize=(width, height), interpolation=cv2.INTER_AREA)
             elif "video_path" in batch:
                 height, width = batch["image"].shape[-2:]
