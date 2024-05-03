@@ -33,12 +33,11 @@ class MemoryBankMixin(nn.Module):
 
     def on_validation_start(self) -> None:
         """Ensure that the model is fitted before validation starts."""
-        if not self._is_fitted:
-            self.fit()
-            self._is_fitted = torch.tensor([True])
+        self.fit()
+        self._is_fitted = torch.tensor([True])
 
     def on_train_epoch_end(self) -> None:
         """Ensure that the model is fitted before validation starts."""
         if not self._is_fitted:
-            self.fit()
-            self._is_fitted = torch.tensor([True])
+          self.fit()
+          self._is_fitted = torch.tensor([True])
