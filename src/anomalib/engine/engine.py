@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from lightning.pytorch.callbacks import Callback, RichModelSummary, RichProgressBar
+from lightning.pytorch.callbacks import Callback
 from lightning.pytorch.loggers import Logger
 from lightning.pytorch.trainer import Trainer
 from lightning.pytorch.utilities.types import _EVALUATE_OUTPUT, _PREDICT_OUTPUT, EVAL_DATALOADERS, TRAIN_DATALOADERS
@@ -32,7 +32,7 @@ from anomalib.models import AnomalyModule
 from anomalib.utils.normalization import NormalizationMethod
 from anomalib.utils.path import create_versioned_dir
 from anomalib.utils.types import NORMALIZATION, THRESHOLD
-from anomalib.utils.visualization import ImageVisualizer
+from anomalib.utils.visualization import BaseVisualizer, ExplanationVisualizer, ImageVisualizer
 
 logger = logging.getLogger(__name__)
 
@@ -322,7 +322,7 @@ class Engine:
             self._cache.update(model)
 
         # Setup anomalib callbacks to be used with the trainer
-        self._setup_anomalib_callbacks()
+        self._setup_anomalib_callbacks(model)
 
         # Temporarily set devices to 1 to avoid issues with multiple processes
         self._cache.args["devices"] = 1
@@ -405,9 +405,9 @@ class Engine:
                 if not getattr(dataloader.dataset, "transform", None):
                     dataloader.dataset.transform = transform
 
-    def _setup_anomalib_callbacks(self) -> None:
+    def _setup_anomalib_callbacks(self, model: AnomalyModule) -> None:
         """Set up callbacks for the trainer."""
-        _callbacks: list[Callback] = [RichProgressBar(), RichModelSummary()]
+        _callbacks: list[Callback] = []
 
         # Add ModelCheckpoint if it is not in the callbacks list.
         has_checkpoint_callback = any(isinstance(c, ModelCheckpoint) for c in self._cache.args["callbacks"])
@@ -432,9 +432,17 @@ class Engine:
         _callbacks.append(_ThresholdCallback(self.threshold))
         _callbacks.append(_MetricsCallback(self.task, self.image_metric_names, self.pixel_metric_names))
 
+        visualizer: BaseVisualizer
+
+        # TODO(ashwinvaidya17): temporary  # noqa: TD003 ignoring as visualizer is getting a complete overhaul
+        if model.__class__.__name__ == "VlmAd":
+            visualizer = ExplanationVisualizer()
+        else:
+            visualizer = ImageVisualizer(task=self.task, normalize=self.normalization == NormalizationMethod.NONE)
+
         _callbacks.append(
             _VisualizationCallback(
-                visualizers=ImageVisualizer(task=self.task, normalize=self.normalization == NormalizationMethod.NONE),
+                visualizers=visualizer,
                 save=True,
                 root=self._cache.args["default_root_dir"] / "images",
             ),
@@ -474,7 +482,7 @@ class Engine:
             bool: Whether it is needed to run a validation sequence.
         """
         # validation before predict is only necessary for zero-/few-shot models
-        if model.learning_type not in [LearningType.ZERO_SHOT, LearningType.FEW_SHOT]:
+        if model.learning_type not in {LearningType.ZERO_SHOT, LearningType.FEW_SHOT}:
             return False
         # check if a checkpoint path is provided
         if ckpt_path is not None:
@@ -534,7 +542,7 @@ class Engine:
         self._setup_trainer(model)
         self._setup_dataset_task(train_dataloaders, val_dataloaders, datamodule)
         self._setup_transform(model, datamodule=datamodule, ckpt_path=ckpt_path)
-        if model.learning_type in [LearningType.ZERO_SHOT, LearningType.FEW_SHOT]:
+        if model.learning_type in {LearningType.ZERO_SHOT, LearningType.FEW_SHOT}:
             # if the model is zero-shot or few-shot, we only need to run validate for normalization and thresholding
             self.trainer.validate(model, val_dataloaders, datamodule=datamodule, ckpt_path=ckpt_path)
         else:
@@ -856,7 +864,7 @@ class Engine:
             datamodule,
         )
         self._setup_transform(model, datamodule=datamodule, ckpt_path=ckpt_path)
-        if model.learning_type in [LearningType.ZERO_SHOT, LearningType.FEW_SHOT]:
+        if model.learning_type in {LearningType.ZERO_SHOT, LearningType.FEW_SHOT}:
             # if the model is zero-shot or few-shot, we only need to run validate for normalization and thresholding
             self.trainer.validate(model, val_dataloaders, None, verbose=False, datamodule=datamodule)
         else:
@@ -912,22 +920,22 @@ class Engine:
         CLI Usage:
             1. To export as a torch ``.pt`` file you can run the following command.
                 ```python
-                anomalib export --model Padim --export_mode torch --ckpt_path <PATH_TO_CHECKPOINT>
+                anomalib export --model Padim --export_type torch --ckpt_path <PATH_TO_CHECKPOINT>
                 ```
             2. To export as an ONNX ``.onnx`` file you can run the following command.
                 ```python
-                anomalib export --model Padim --export_mode onnx --ckpt_path <PATH_TO_CHECKPOINT> \
+                anomalib export --model Padim --export_type onnx --ckpt_path <PATH_TO_CHECKPOINT> \
                 --input_size "[256,256]"
                 ```
             3. To export as an OpenVINO ``.xml`` and ``.bin`` file you can run the following command.
                 ```python
-                anomalib export --model Padim --export_mode openvino --ckpt_path <PATH_TO_CHECKPOINT> \
-                --input_size "[256,256] --compression_type "fp16"
+                anomalib export --model Padim --export_type openvino --ckpt_path <PATH_TO_CHECKPOINT> \
+                --input_size "[256,256] --compression_type FP16
                 ```
             4. You can also quantize OpenVINO model with the following.
                 ```python
-                anomalib export --model Padim --export_mode openvino --ckpt_path <PATH_TO_CHECKPOINT> \
-                --input_size "[256,256]" --compression_type "int8_ptq" --data MVTec
+                anomalib export --model Padim --export_type openvino --ckpt_path <PATH_TO_CHECKPOINT> \
+                --input_size "[256,256]" --compression_type INT8_PTQ --data MVTec
                 ```
         """
         export_type = ExportType(export_type)

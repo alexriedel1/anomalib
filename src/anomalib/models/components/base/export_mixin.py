@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import torch
+from lightning_utilities.core.imports import module_available
 from torch import nn
 from torchmetrics import Metric
 from torchvision.transforms.v2 import Transform
@@ -20,7 +21,6 @@ from anomalib import TaskType
 from anomalib.data import AnomalibDataModule
 from anomalib.deploy.export import CompressionType, ExportType, InferenceModel
 from anomalib.metrics import create_metric_collection
-from anomalib.utils.exceptions import try_import
 
 if TYPE_CHECKING:
     from importlib.util import find_spec
@@ -142,7 +142,9 @@ class ExportMixin:
         export_root = _create_export_root(export_root, ExportType.ONNX)
         input_shape = torch.zeros((1, 3, *input_size)) if input_size else torch.zeros((1, 3, 1, 1))
         dynamic_axes = (
-            None if input_size else {"input": {0: "batch_size", 2: "height", 3: "weight"}, "output": {0: "batch_size"}}
+            {"input": {0: "batch_size"}, "output": {0: "batch_size"}}
+            if input_size
+            else {"input": {0: "batch_size", 2: "height", 3: "weight"}, "output": {0: "batch_size"}}
         )
         _write_metadata_to_json(self._get_metadata(task), export_root)
         onnx_path = export_root / "model.onnx"
@@ -243,7 +245,7 @@ class ExportMixin:
             ...     task="segmentation",
             ... )
         """
-        if not try_import("openvino"):
+        if not module_available("openvino"):
             logger.exception("Could not find OpenVINO. Please check OpenVINO installation.")
             raise ModuleNotFoundError
 
@@ -292,7 +294,7 @@ class ExportMixin:
         Returns:
             model (CompiledModel): Model in the OpenVINO format compressed with NNCF quantization.
         """
-        if not try_import("nncf"):
+        if not module_available("nncf"):
             logger.exception("Could not find NCCF. Please check NNCF installation.")
             raise ModuleNotFoundError
 
@@ -310,8 +312,8 @@ class ExportMixin:
 
         return model
 
+    @staticmethod
     def _post_training_quantization_ov(
-        self,
         model: "CompiledModel",
         datamodule: AnomalibDataModule | None = None,
     ) -> "CompiledModel":
@@ -330,13 +332,14 @@ class ExportMixin:
         if datamodule is None:
             msg = "Datamodule must be provided for OpenVINO INT8_PTQ compression"
             raise ValueError(msg)
+        datamodule.setup("fit")
 
         model_input = model.input(0)
 
         if model_input.partial_shape[0].is_static:
             datamodule.train_batch_size = model_input.shape[0]
 
-        dataloader = datamodule.train_dataloader()
+        dataloader = datamodule.val_dataloader()
         if len(dataloader.dataset) < 300:
             logger.warning(
                 f">300 images recommended for INT8 quantization, found only {len(dataloader.dataset)} images",
@@ -345,8 +348,8 @@ class ExportMixin:
         calibration_dataset = nncf.Dataset(dataloader, lambda x: x["image"])
         return nncf.quantize(model, calibration_dataset)
 
+    @staticmethod
     def _accuracy_control_quantization_ov(
-        self,
         model: "CompiledModel",
         datamodule: AnomalibDataModule | None = None,
         metric: Metric | str | None = None,
@@ -373,6 +376,8 @@ class ExportMixin:
         if datamodule is None:
             msg = "Datamodule must be provided for OpenVINO INT8_PTQ compression"
             raise ValueError(msg)
+        datamodule.setup("fit")
+
         if metric is None:
             msg = "Metric must be provided for OpenVINO INT8_ACQ compression"
             raise ValueError(msg)
@@ -383,14 +388,14 @@ class ExportMixin:
             datamodule.train_batch_size = model_input.shape[0]
             datamodule.eval_batch_size = model_input.shape[0]
 
-        dataloader = datamodule.train_dataloader()
+        dataloader = datamodule.val_dataloader()
         if len(dataloader.dataset) < 300:
             logger.warning(
                 f">300 images recommended for INT8 quantization, found only {len(dataloader.dataset)} images",
             )
 
         calibration_dataset = nncf.Dataset(dataloader, lambda x: x["image"])
-        validation_dataset = nncf.Dataset(datamodule.val_dataloader())
+        validation_dataset = nncf.Dataset(datamodule.test_dataloader())
 
         if isinstance(metric, str):
             metric = create_metric_collection([metric])[metric]
