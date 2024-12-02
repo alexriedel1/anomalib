@@ -15,6 +15,8 @@ from anomalib.models.components import DynamicBufferMixin, KCenterGreedy, TimmFe
 from .anomaly_map import AnomalyMapGenerator
 from torchvision.models.feature_extraction import create_feature_extractor
 import antialiased_cnns
+from antialiased_cnns.blurpool import BlurPool
+
 
 if TYPE_CHECKING:
     from anomalib.data.utils.tiler import Tiler
@@ -49,6 +51,13 @@ class PatchcoreModel(DynamicBufferMixin, nn.Module):
 
         if self.backbone == "antialiased_wide_resnet50_2":
             model = antialiased_cnns.wide_resnet50_2(pretrained=True)
+            self.feature_extractor = create_feature_extractor(
+                model=model,
+                return_nodes={layer: layer for layer in self.layers},
+                tracer_kwargs={"leaf_modules": [BlurPool]},  # for models comes from antialias
+        ).eval()
+        elif self.backbone == "antialiased_resnet18":
+            model = antialiased_cnns.resnet18(pretrained=True)
             self.feature_extractor = create_feature_extractor(
                 model=model,
                 return_nodes={layer: layer for layer in self.layers},
