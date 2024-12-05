@@ -15,7 +15,7 @@ from torch import nn
 from torchvision.transforms.v2 import Compose, Resize, Transform
 
 from anomalib import LearningType
-from anomalib.data.utils import Augmenter
+from anomalib.data.utils.generators.perlin import PerlinAnomalyGenerator
 from anomalib.models.components import AnomalyModule
 
 from .loss import DraemLoss
@@ -46,7 +46,7 @@ class Draem(AnomalyModule):
     ) -> None:
         super().__init__()
 
-        self.augmenter = Augmenter(anomaly_source_path, beta=beta)
+        self.augmenter = PerlinAnomalyGenerator(anomaly_source_path, beta=beta)
         self.model = DraemModel(sspcab=enable_sspcab)
         self.loss = DraemLoss()
         self.sspcab = enable_sspcab

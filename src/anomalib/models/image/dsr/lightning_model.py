@@ -17,9 +17,8 @@ from torchvision.transforms.v2 import Compose, Resize, Transform
 
 from anomalib import LearningType
 from anomalib.data.utils import DownloadInfo, download_and_extract
-from anomalib.data.utils.augmenter import Augmenter
+from anomalib.data.utils.generators.perlin import PerlinAnomalyGenerator
 from anomalib.models.components import AnomalyModule
-from anomalib.models.image.dsr.anomaly_generator import DsrAnomalyGenerator
 from anomalib.models.image.dsr.loss import DsrSecondStageLoss, DsrThirdStageLoss
 from anomalib.models.image.dsr.torch_model import DsrModel
 
@@ -49,7 +48,7 @@ class Dsr(AnomalyModule):
         self.upsampling_train_ratio = upsampling_train_ratio
 
         self.quantized_anomaly_generator = DsrAnomalyGenerator()
-        self.perlin_generator = Augmenter()
+        self.perlin_generator = PerlinAnomalyGenerator()
         self.model = DsrModel(latent_anomaly_strength)
         self.second_stage_loss = DsrSecondStageLoss()
         self.third_stage_loss = DsrThirdStageLoss()
