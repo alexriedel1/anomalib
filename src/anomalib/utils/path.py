@@ -251,20 +251,20 @@ def convert_to_title_case(text: str) -> str:
 def generate_output_filename(
     input_path: str | Path,
     output_path: str | Path,
-    dataset_name: str,
+    dataset_name: str | None = None,
     category: str | None = None,
     mkdir: bool = True,
 ) -> Path:
     """Generate an output filename based on the input path.
 
     This function generates an output path that preserves the directory structure after the
-    dataset name (and category if provided) while placing the file in the specified output
+    dataset name (and category if provided) or, if not dataset name provided,  while placing the file in the specified output
     directory.
 
     Args:
         input_path (str | Path): Path to the input file.
         output_path (str | Path): Base output directory path.
-        dataset_name (str): Name of the dataset to find in the input path.
+        dataset_name (str | None, optional): Name of the dataset to find in the input path.
         category (str | None, optional): Category name to find in the input path after
             dataset name. Defaults to ``None``.
         mkdir (bool, optional): Whether to create the output directory structure.
@@ -305,6 +305,13 @@ def generate_output_filename(
             ...
         ValueError: Dataset name 'Missing' not found in the input path.
 
+        No dataset name provided return the input path structure as output path:
+
+        >>> path = "/datasets/MyDataset/train/class_A/image_001.jpg"
+        >>> generate_output_filename(input_path, "/results", "")
+        PosixPath('/results/data/MVTec/bottle/test/broken_large/000.png')
+
+
     Note:
         - Directory structure after ``dataset_name`` (or ``category`` if provided) is
           preserved in output path
@@ -314,13 +321,16 @@ def generate_output_filename(
     """
     input_path = Path(input_path)
     output_path = Path(output_path)
+    #print(input_path)
+    #print(output_path)
 
-    # Find the position of the dataset name in the path
-    try:
+    
+    # Find the position of the dataset name in the path, if no dataset name is provided use the full path
+    if not dataset_name.lower() in [x.lower() for x in input_path.parts]:
+        dataset_index = len(input_path.parts)
+
+    else:
         dataset_index = next(i for i, part in enumerate(input_path.parts) if part.lower() == dataset_name.lower())
-    except StopIteration:
-        msg = f"Dataset name '{dataset_name}' not found in the input path."
-        raise ValueError(msg) from None
 
     # Determine the start index for preserving subdirectories
     start_index = dataset_index + 1
@@ -344,3 +354,24 @@ def generate_output_filename(
 
     # Create and return the output filename
     return output_path / input_path.name
+
+
+if __name__ == "__main__":
+   input_path = "/data/MVTec/bottle/test/broken_large/000.png"
+   output_base = "/results"
+   dataset = "MVTec"
+   print(generate_output_filename(input_path, output_base, dataset, "bottle"))
+#PosixPath('/results/test/broken_large/000.png')
+
+
+   print(generate_output_filename(input_path, output_base, dataset))
+    #PosixPath('/results/bottle/test/broken_large/000.png')
+
+
+   path = "/datasets/MyDataset/train/class_A/image_001.jpg"
+   print(generate_output_filename(path, "/output", "MyDataset", "class_A"))
+   #PosixPath('/output/image_001.jpg')
+
+   print(generate_output_filename("/wrong/path/image.png", "/out", ""))
+
+
