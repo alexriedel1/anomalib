@@ -105,7 +105,7 @@ def make_synthetic_dataset(
     augmenter = PerlinAnomalyGenerator(
         anomaly_source_path="./datasets/dtd",
         probability=1.0,
-        blend_factor=(0.01, 0.2),
+        blend_factor=(0.07, 0.3),
     )
 
     def augment(sample: Series) -> Series:
