@@ -105,6 +105,26 @@ def try_register_in_bulk() -> None:
 try_register_in_bulk()
 
 
+
+def get_antialiased_feature_extractor(model_name, layers):
+    import antialiased_cnns
+    from torchvision.models.feature_extraction import create_feature_extractor
+    from antialiased_cnns.blurpool import BlurPool
+
+    if model_name == "antialiased_wide_resnet50_2":
+        model = antialiased_cnns.wide_resnet50_2(pretrained=True)
+    elif model_name == "antialiased_wide_resnet101_2":
+        model = antialiased_cnns.wide_resnet101_2(pretrained=True)
+    else:
+        raise ValueError(f"Antialised model {model_name} not found")
+    
+    feature_extractor = create_feature_extractor(
+            model=model,
+            return_nodes={layer: layer for layer in layers},
+            tracer_kwargs={"leaf_modules": [BlurPool]},  # for models comes from antialias
+        )
+    return feature_extractor
+
 class TimmFeatureExtractor(nn.Module):
     """Extract intermediate features from timm models.
 
@@ -157,16 +177,20 @@ class TimmFeatureExtractor(nn.Module):
 
         self.backbone = backbone
         self.layers = list(layers)
-        self.idx = self._map_layer_to_idx()
         self.requires_grad = requires_grad
-        self.feature_extractor = timm.create_model(
-            backbone,
-            pretrained=pre_trained,
-            features_only=True,
-            exportable=True,
-            out_indices=self.idx,
-        )
-        self.out_dims = self.feature_extractor.feature_info.channels()
+
+        if "antialiased" in backbone:
+            self.feature_extractor = get_antialiased_feature_extractor(backbone, layers)
+        else:
+            self.idx = self._map_layer_to_idx()
+            self.feature_extractor = timm.create_model(
+                backbone,
+                pretrained=pre_trained,
+                features_only=True,
+                exportable=True,
+                out_indices=self.idx,
+            )
+            self.out_dims = self.feature_extractor.feature_info.channels()
         self._features = {layer: torch.empty(0) for layer in self.layers}
 
     def _map_layer_to_idx(self) -> list[int]:
@@ -229,6 +253,9 @@ class TimmFeatureExtractor(nn.Module):
             features = dict(zip(self.layers, self.feature_extractor(inputs), strict=True))
         else:
             self.feature_extractor.eval()
+            features = self.feature_extractor(inputs)
             with torch.no_grad():
-                features = dict(zip(self.layers, self.feature_extractor(inputs), strict=True))
+                features = self.feature_extractor(inputs)
+                if not isinstance(features, dict):
+                    features = dict(zip(self.layers, features, strict=True))
         return features
