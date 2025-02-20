@@ -48,6 +48,7 @@ def make_synthetic_dataset(
     source_samples: DataFrame,
     image_dir: Path,
     mask_dir: Path,
+    augmenter: PerlinAnomalyGenerator,
     anomalous_ratio: float = 0.5,
 ) -> DataFrame:
     """Convert normal samples into a mixed set with synthetic anomalies.
@@ -101,13 +102,7 @@ def make_synthetic_dataset(
     normal_samples = source_samples.drop(anomalous_samples.index)
     anomalous_samples = anomalous_samples.reset_index(drop=True)
 
-    # initialize augmenter
-    augmenter = PerlinAnomalyGenerator(
-        anomaly_source_path="./datasets/dtd",
-        probability=1.0,
-        blend_factor=(0.01, 0.2),
-    )
-
+    
     def augment(sample: Series) -> Series:
         """Apply synthetic anomalous augmentation to a sample.
 
@@ -189,10 +184,19 @@ class SyntheticAnomalyDataset(AnomalibDataset):
         self.mask_dir.mkdir()
 
         self._cleanup = True  # flag that determines if temp dir is cleaned up
+
+        # initialize augmenter
+        augmenter = PerlinAnomalyGenerator(
+            anomaly_source_path="./datasets/dtd",
+            probability=1.0,
+            blend_factor=(0.07, 0.3),
+        )
+
         self.samples = make_synthetic_dataset(
             self.source_samples,
             self.im_dir,
             self.mask_dir,
+            augmenter,
             0.5,
         )
 
