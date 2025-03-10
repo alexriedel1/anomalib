@@ -166,7 +166,9 @@ class SyntheticAnomalyDataset(AnomalibDataset):
         100
     """
 
-    def __init__(self, augmentations: Transform | None, source_samples: DataFrame, dataset_name: str) -> None:
+    def __init__(self, augmentations: Transform | None, source_samples: DataFrame, 
+                 dataset_name: str, anomaly_source_path: str, 
+                 anomaly_blend_factor: tuple ) -> None:
         super().__init__(augmentations=augmentations)
 
         self.source_samples = source_samples
@@ -187,9 +189,9 @@ class SyntheticAnomalyDataset(AnomalibDataset):
 
         # initialize augmenter
         augmenter = PerlinAnomalyGenerator(
-            anomaly_source_path="./datasets/dtd",
+            anomaly_source_path=anomaly_source_path,
             probability=1.0,
-            blend_factor=(0.07, 0.3),
+            blend_factor=anomaly_blend_factor,
         )
 
         self.samples = make_synthetic_dataset(
@@ -206,6 +208,8 @@ class SyntheticAnomalyDataset(AnomalibDataset):
     def from_dataset(
         cls: type["SyntheticAnomalyDataset"],
         dataset: AnomalibDataset,
+        anomaly_source_path: str = "./datasets/dtd", 
+        anomaly_blend_factor: tuple = (0.01, 0.2)
     ) -> "SyntheticAnomalyDataset":
         """Create synthetic dataset from existing dataset of normal images.
 
@@ -220,7 +224,8 @@ class SyntheticAnomalyDataset(AnomalibDataset):
             >>> normal_dataset = Dataset(...)
             >>> synthetic = SyntheticAnomalyDataset.from_dataset(normal_dataset)
         """
-        return cls(augmentations=dataset.augmentations, source_samples=dataset.samples, dataset_name=dataset.name)
+        return cls(augmentations=dataset.augmentations, source_samples=dataset.samples, dataset_name=dataset.name, 
+                   anomaly_source_path=anomaly_source_path, anomaly_blend_factor=anomaly_blend_factor)
 
     def __copy__(self) -> "SyntheticAnomalyDataset":
         """Return shallow copy and prevent cleanup of original.
