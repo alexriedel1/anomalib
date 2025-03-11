@@ -304,7 +304,7 @@ class EfficientAd(AnomalibModule):
         Returns:
             PreProcessor: Configured pre-processor with resize transform.
         """
-        image_size = image_size or (256, 256)
+        image_size = image_size or (768, 768)
         transform = Compose([Resize(image_size, antialias=True)])
         return PreProcessor(transform=transform)
 

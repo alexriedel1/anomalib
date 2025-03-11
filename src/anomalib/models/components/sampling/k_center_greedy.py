@@ -11,7 +11,9 @@ Reference:
 
 import torch
 from torch.nn import functional as F  # noqa: N812
-from tqdm import tqdm
+from tqdm.notebook import tqdm
+
+
 
 from anomalib.models.components.dimensionality_reduction import SparseRandomProjection
 

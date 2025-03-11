@@ -283,6 +283,7 @@ def make_folder_dataset(
 
     # infer the task type
     samples.attrs["task"] = "classification" if (samples["mask_path"] == "").all() else "segmentation"
+    samples.attrs["task"] = "segmentation" if (samples["mask_path"] == "").all() else "segmentation"
 
     # Get the data frame for the split.
     if split:
