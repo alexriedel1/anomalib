@@ -49,7 +49,20 @@ from .dataclasses import (
 # Datamodules
 from .datamodules.base import AnomalibDataModule
 from .datamodules.depth import DepthDataFormat, Folder3D, MVTec3D
-from .datamodules.image import BTech, Datumaro, Folder, ImageDataFormat, Kolektor, MVTecAD, Visa
+from .datamodules.image import (
+    VAD,
+    BTech,
+    Datumaro,
+    Folder,
+    ImageDataFormat,
+    Kolektor,
+    MVTec,
+    MVTecAD,
+    MVTecAD2,
+    MVTecLOCO,
+    RealIAD,
+    Visa,
+)
 from .datamodules.video import Avenue, ShanghaiTech, UCSDped, VideoDataFormat
 
 # Datasets
@@ -61,6 +74,8 @@ from .datasets.image import (
     FolderDataset,
     KolektorDataset,
     MVTecADDataset,
+    MVTecLOCODataset,
+    VADDataset,
     VisaDataset,
 )
 from .datasets.video import AvenueDataset, ShanghaiTechDataset, UCSDpedDataset
@@ -144,35 +159,47 @@ __all__ = [
     "NumpyVideoItem",
     "VideoBatch",
     "VideoItem",
-    # Depth
+    # Data Formats
+    "DataFormat",
     "DepthDataFormat",
-    "Folder3D",
-    "Folder3DDataset",
-    "MVTec3D",
-    "MVTec3DDataset",
-    # Image
-    "BTech",
-    "BTechDataset",
-    "Datumaro",
-    "DatumaroDataset",
-    "Folder",
-    "FolderDataset",
     "ImageDataFormat",
-    "Kolektor",
-    "KolektorDataset",
-    "MVTecAD",
-    "MVTecADDataset",
-    "Visa",
-    "VisaDataset",
-    # Video
-    "Avenue",
-    "AvenueDataset",
-    "ShanghaiTech",
-    "ShanghaiTechDataset",
-    "UCSDped",
-    "UCSDpedDataset",
     "VideoDataFormat",
-    # Predict
+    # Depth Data Modules
+    "Folder3D",
+    "MVTec3D",
+    # Image Data Modules
+    "BTech",
+    "Datumaro",
+    "Folder",
+    "Kolektor",
+    "MVTec",  # Include MVTec for backward compatibility
+    "MVTecAD",
+    "MVTecAD2",
+    "MVTecLOCO",
+    "RealIAD",
+    "VAD",
+    "Visa",
+    # Video Data Modules
+    "Avenue",
+    "ShanghaiTech",
+    "UCSDped",
+    # Datasets
+    "Folder3DDataset",
+    "MVTec3DDataset",
+    "BTechDataset",
+    "DatumaroDataset",
+    "FolderDataset",
+    "KolektorDataset",
+    "MVTecADDataset",
+    "MVTecLOCODataset",
+    "VADDataset",
+    "VisaDataset",
+    "AvenueDataset",
+    "ShanghaiTechDataset",
+    "UCSDpedDataset",
     "PredictDataset",
+    # Functions
     "get_datamodule",
+    # Exceptions
+    "UnknownDatamoduleError",
 ]
