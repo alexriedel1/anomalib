@@ -1,0 +1,15 @@
+examples/notebooks/000_getting_started/001_getting_started.ipynb
+examples/notebooks/100_datamodules/101_btech.ipynb
+examples/notebooks/100_datamodules/102_mvtec.ipynb
+examples/notebooks/100_datamodules/103_folder.ipynb
+examples/notebooks/100_datamodules/104_tiling.ipynb
+examples/notebooks/200_models/201_fastflow.ipynb
+examples/notebooks/400_openvino/401_nncf.ipynb
+examples/notebooks/500_use_cases/501_dobot/501a_training_a_model_with_cubes_from_a_robotic_arm.ipynb
+examples/notebooks/500_use_cases/501_dobot/501b_inference_with_a_robotic_arm.ipynb
+examples/notebooks/600_loggers/601_mlflow_logging.ipynb
+examples/notebooks/700_metrics/701a_aupimo.ipynb
+examples/notebooks/700_metrics/701b_aupimo_advanced_i.ipynb
+examples/notebooks/700_metrics/701c_aupimo_advanced_ii.ipynb
+examples/notebooks/700_metrics/701d_aupimo_advanced_iii.ipynb
+examples/notebooks/700_metrics/701e_aupimo_advanced_iv.ipynb
