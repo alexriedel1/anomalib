@@ -3,6 +3,7 @@ datasets
 !src/anomalib/data/datasets
 pre_trained
 results
+examples
 
 # Test-related files and directories
 tmp*
