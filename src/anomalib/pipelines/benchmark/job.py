@@ -153,7 +153,7 @@ class BenchmarkJob(Job):
             "test_duration": job_end_time - test_start_time,
         }
         # TODO(ashwinvaidya17): Restore throughput
-        # https://github.com/openvinotoolkit/anomalib/issues/2054
+        # https://github.com/open-edge-platform/anomalib/issues/2054
         output = {
             "accelerator": self.accelerator,
             **durations,
@@ -210,9 +210,9 @@ class BenchmarkJob(Job):
         if gathered_result is not None:
             console = Console()
             table = Table(title=f"{BenchmarkJob.name} Results", show_header=True, header_style="bold magenta")
-            _results = gathered_result.to_dict("list")
-            for column in _results:
+            results = gathered_result.to_dict("list")
+            for column in results:
                 table.add_column(column)
-            for row in zip(*_results.values(), strict=False):
+            for row in zip(*results.values(), strict=False):
                 table.add_row(*[str(value) for value in row])
             console.print(table)

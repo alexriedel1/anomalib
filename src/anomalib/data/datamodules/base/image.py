@@ -45,6 +45,8 @@ from anomalib.data.utils.synthetic import SyntheticAnomalyDataset
 from anomalib.utils.attrs import get_nested_attr
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pandas import DataFrame
 
 
@@ -131,6 +133,8 @@ class AnomalibDataModule(LightningDataModule, ABC):
 
         self._is_setup = False  # flag to track if setup has been called
 
+        self.external_collate_fn: Callable | None = None
+
     @property
     def name(self) -> str:
         """Name of the datamodule.
@@ -198,7 +202,7 @@ class AnomalibDataModule(LightningDataModule, ABC):
                         applies a Resize transform with a different output size. The final effective input size as \
                         seen by the model will be determined by the model transforms, not the augmentations. To change \
                         the effective input size, please change the model transforms in the PreProcessor module. \
-                        Augmentations: {aug_resize.size}, Model transforms: {model_transform.size}"
+                        Augmentations: {aug_resize.size}, Model transforms: {model_resize.size}"
                     logger.warning(msg)
                 if model_resize.interpolation != aug_resize.interpolation:
                     msg = f"Conflicting interpolation method found between augmentations and model transforms. You are \
@@ -370,7 +374,7 @@ class AnomalibDataModule(LightningDataModule, ABC):
             shuffle=True,
             batch_size=self.train_batch_size,
             num_workers=self.num_workers,
-            collate_fn=self.train_data.collate_fn,
+            collate_fn=self.external_collate_fn or self.train_data.collate_fn,
         )
 
     def val_dataloader(self) -> EVAL_DATALOADERS:
@@ -384,7 +388,7 @@ class AnomalibDataModule(LightningDataModule, ABC):
             shuffle=False,
             batch_size=self.eval_batch_size,
             num_workers=self.num_workers,
-            collate_fn=self.val_data.collate_fn,
+            collate_fn=self.external_collate_fn or self.val_data.collate_fn,
         )
 
     def test_dataloader(self) -> EVAL_DATALOADERS:
@@ -398,7 +402,7 @@ class AnomalibDataModule(LightningDataModule, ABC):
             shuffle=False,
             batch_size=self.eval_batch_size,
             num_workers=self.num_workers,
-            collate_fn=self.test_data.collate_fn,
+            collate_fn=self.external_collate_fn or self.test_data.collate_fn,
         )
 
     def predict_dataloader(self) -> EVAL_DATALOADERS:

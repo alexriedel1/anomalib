@@ -20,6 +20,7 @@
 # - tools: Comma-separated list of tools to run
 # - scan-scope: Scope of scanning
 # - severity-level: Minimum severity threshold
+# - confidence-level: Minimum confidence threshold
 # - fail-on-findings: Whether to fail on security findings
 #
 # Outputs:
@@ -33,6 +34,7 @@
 #         tools: "bandit,semgrep"
 #         scan-scope: "changed"
 #         severity-level: "MEDIUM"
+#         confidence-level: "HIGH"
 #         fail-on-findings: true
 #
 # Note: Different security tools may require specific permissions
@@ -44,7 +46,7 @@ on:
   workflow_call:
     inputs:
       tools:
-        description: "Security tools to run (comma-separated: bandit,clamav,semgrep,trivy)"
+        description: "Security tools to run (comma-separated: bandit,clamav,semgrep,trivy,zizmor)"
         type: string
         default: "bandit,semgrep"
       scan-scope:
@@ -53,6 +55,10 @@ on:
         default: "changed"
       severity-level:
         description: "Minimum severity level (LOW/MEDIUM/HIGH)"
+        type: string
+        default: "LOW"
+      confidence-level:
+        description: "Minimum confidence level (LOW/MEDIUM/HIGH)"
         type: string
         default: "LOW"
       fail-on-findings:
@@ -64,52 +70,41 @@ on:
         description: "Whether any security issues were found"
         value: ${{ jobs.summarize.outputs.has_findings }}
 
+permissions:
+  contents: read
+  security-events: write # needed by nested workflows to upload results
+
 jobs:
   bandit:
     if: contains(inputs.tools, 'bandit')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Run Bandit scan
         uses: ./.github/actions/security/bandit
         with:
           scan-scope: ${{ inputs.scan-scope }}
           severity-level: ${{ inputs.severity-level }}
+          confidence-level: ${{ inputs.confidence-level }}
           fail-on-findings: ${{ inputs.fail-on-findings }}
-      - uses: actions/upload-artifact@v4
-        if: hashFiles('bandit-report.*') != '' # if any report is available
-        with:
-          name: bandit-results
-          path: bandit-report.*
-          retention-days: 7
-      - uses: github/codeql-action/upload-sarif@1b549b9259bda1cb5ddde3b41741a82a2d15a841 # v3.28.8
-        if: hashFiles('bandit-report.sarif') != '' # if SARIF is available, upload it
-        with:
-          sarif_file: bandit-report.sarif
 
   semgrep:
     if: contains(inputs.tools, 'semgrep')
     runs-on: ubuntu-latest
     container:
-      image: returntocorp/semgrep
+      image: returntocorp/semgrep@sha256:14e073f6417e5d2d0797aa13f26d569270b86fac9d52052d2358c985f1a4e9f0 # v1.124.0
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Run Semgrep scan
         uses: ./.github/actions/security/semgrep
         with:
           scan-scope: ${{ inputs.scan-scope }}
           severity: ${{ inputs.severity-level }}
           fail-on-findings: ${{ inputs.fail-on-findings }}
-      - uses: actions/upload-artifact@v4
-        if: hashFiles('security-results/semgrep/*') != '' # if any report is available
-        with:
-          name: semgrep-results
-          path: security-results/semgrep
-          retention-days: 7
-      - uses: github/codeql-action/upload-sarif@1b549b9259bda1cb5ddde3b41741a82a2d15a841 # v3.28.8
-        if: hashFiles('security-results/semgrep/semgrep-results.sarif') != '' # if SARIF is available, upload it
-        with:
-          sarif_file: security-results/semgrep/semgrep-results.sarif
 
   trivy:
     if: contains(inputs.tools, 'trivy')
@@ -118,6 +113,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Required for changed files detection
+          persist-credentials: false
+
+      # These steps are required to lock dependencies in requirements.txt that will by used by Trivy
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: "3.10"
+      - name: Install dependencies
+        run: python -m pip install pip-tools
+      - name: Freeze dependencies
+        run: pip-compile --extra=full -o requirements.txt pyproject.toml
 
       - name: Run Trivy scan
         id: trivy
@@ -125,44 +131,43 @@ jobs:
         with:
           scan_type: "fs"
           scan-scope: ${{ inputs.scan-scope }}
-          severity: ${{ inputs.severity-level }},HIGH,CRITICAL
-          scanners: "vuln,secret"
+          severity: ${{ inputs.severity-level }}
+          scanners: "vuln,secret,config"
           format: "sarif"
           timeout: "15m"
-          ignore_unfixed: "true"
-
-      - name: Move Trivy results
-        if: always() && steps.trivy.outputs.report_path
-        run: |
-          mkdir -p security-results/trivy
-          mv ${{ steps.trivy.outputs.report_path }} security-results/trivy/
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: trivy-results
-          path: security-results/trivy
-          retention-days: 7
+          ignore_unfixed: "false"
+          generate_sbom: "true"
 
   clamav:
     if: contains(inputs.tools, 'clamav')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Run ClamAV scan
         uses: ./.github/actions/security/clamav
         with:
           scan-scope: ${{ inputs.scan-scope }}
           fail-on-findings: ${{ inputs.fail-on-findings }}
-      - uses: actions/upload-artifact@v4
-        if: always()
+
+  zizmor:
+    if: contains(inputs.tools, 'zizmor')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
         with:
-          name: clamav-results
-          path: security-results/clamav
-          retention-days: 7
+          persist-credentials: false
+      - name: Run Zizmor scan
+        uses: ./.github/actions/security/zizmor
+        with:
+          scan-scope: ${{ inputs.scan-scope }}
+          severity-level: ${{ inputs.severity-level }}
+          confidence-level: ${{ inputs.confidence-level }}
+          fail-on-findings: ${{ inputs.fail-on-findings }}
 
   summarize:
-    needs: [bandit, semgrep, trivy, clamav]
+    needs: [bandit, semgrep, trivy, clamav, zizmor]
     if: always()
     runs-on: ubuntu-latest
     outputs:

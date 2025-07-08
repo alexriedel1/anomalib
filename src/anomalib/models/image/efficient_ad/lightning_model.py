@@ -69,7 +69,7 @@ IMAGENETTE_DOWNLOAD_INFO = DownloadInfo(
 
 WEIGHTS_DOWNLOAD_INFO = DownloadInfo(
     name="efficientad_pretrained_weights.zip",
-    url="https://github.com/openvinotoolkit/anomalib/releases/download/efficientad_pretrained_weights/efficientad_pretrained_weights.zip",
+    url="https://github.com/open-edge-platform/anomalib/releases/download/efficientad_pretrained_weights/efficientad_pretrained_weights.zip",
     hashsum="c09aeaa2b33f244b3261a5efdaeae8f8284a949470a4c5a526c61275fe62684a",
 )
 
@@ -167,7 +167,9 @@ class EfficientAd(AnomalibModule):
             pretrained_models_dir / "efficientad_pretrained_weights" / f"pretrained_teacher_{model_size_str}.pth"
         )
         logger.info(f"Load pretrained teacher model from {teacher_path}")
-        self.model.teacher.load_state_dict(torch.load(teacher_path, map_location=torch.device(self.device)))
+        self.model.teacher.load_state_dict(
+            torch.load(teacher_path, map_location=torch.device(self.device), weights_only=True),
+        )
 
     def prepare_imagenette_data(self, image_size: tuple[int, int] | torch.Size) -> None:
         """Prepare ImageNette dataset transformations.
