@@ -1,3 +1,6 @@
+# Copyright (C) 2022-2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 """Base Anomalib data module.
 
 This module provides the base data module class used across Anomalib. It handles
@@ -21,9 +24,6 @@ Example:
         ...     **override_kwargs
         ... )
 """
-
-# Copyright (C) 2022-2025 Intel Corporation
-# SPDX-License-Identifier: Apache-2.0
 
 import copy
 import logging
@@ -170,9 +170,15 @@ class AnomalibDataModule(LightningDataModule, ABC):
         for subset_name in ["train", "val", "test"]:
             subset = getattr(self, f"{subset_name}_data", None)
             augmentations = getattr(self, f"{subset_name}_augmentations", None)
-            model_transform = get_nested_attr(self, "trainer.model.pre_processor.transform")
-            if subset and model_transform:
-                self._update_subset_augmentations(subset, augmentations, model_transform)
+            model_transform = get_nested_attr(self, "trainer.model.pre_processor.transform", None)
+
+            if subset:
+                if model_transform:
+                    # If model transform exists, update augmentations with model-specific transforms
+                    self._update_subset_augmentations(subset, augmentations, model_transform)
+                else:
+                    # If no model transform, just apply the user-specified augmentations
+                    subset.augmentations = augmentations
 
     @staticmethod
     def _update_subset_augmentations(
