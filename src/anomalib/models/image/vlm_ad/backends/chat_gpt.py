@@ -51,6 +51,11 @@ if module_available("openai"):
 else:
     OpenAI = None
 
+if module_available("dotenv"):
+    from dotenv import load_dotenv
+else:
+    load_dotenv = None
+
 if TYPE_CHECKING:
     from openai.types.chat import ChatCompletion
 
