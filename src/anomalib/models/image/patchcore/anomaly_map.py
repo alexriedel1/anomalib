@@ -31,6 +31,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F  # noqa: N812
 import kornia
+from anomalib.models.components import GaussianBlur2d
+
 
 class AnomalyMapGenerator(nn.Module):
     """Generate Anomaly Heatmap.
