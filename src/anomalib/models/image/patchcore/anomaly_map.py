@@ -31,7 +31,6 @@ import torch
 from torch import nn
 from torch.nn import functional as F  # noqa: N812
 import kornia
-from anomalib.models.components import GaussianBlur2d
 
 
 class AnomalyMapGenerator(nn.Module):
@@ -80,8 +79,7 @@ class AnomalyMapGenerator(nn.Module):
             anomaly_map = patch_scores
         else:
             anomaly_map = F.interpolate(patch_scores, size=(image_size[0], image_size[1]))
-        blur = kornia.filters.gaussian_blur2d(anomaly_map,  (self.kernel_size, self.kernel_size), (self.sigma, self.sigma))
-        return blur
+        return kornia.filters.gaussian_blur2d(anomaly_map, (self.kernel_size, self.kernel_size), (self.sigma, self.sigma))
 
     def forward(
         self,
