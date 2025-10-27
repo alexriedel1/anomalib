@@ -63,8 +63,8 @@ def imagenet_norm_batch(x: torch.Tensor) -> torch.Tensor:
             - Green channel: mean=0.456, std=0.224
             - Blue channel: mean=0.406, std=0.225
     """
-    mean = torch.tensor([0.485, 0.456, 0.406])[None, :, None, None].to(x.device)
-    std = torch.tensor([0.229, 0.224, 0.225])[None, :, None, None].to(x.device)
+    mean = torch.tensor([0.485, 0.456, 0.406], dtype=x.dtype)[None, :, None, None].to(x.device)
+    std = torch.tensor([0.229, 0.224, 0.225], dtype=x.dtype)[None, :, None, None].to(x.device)
     return (x - mean) / std
 
 
@@ -176,6 +176,7 @@ class SmallPatchDescriptionNetwork(nn.Module):
                 ``(N, out_channels, H', W')``, where ``H'`` and ``W'`` are
                 determined by the network architecture and padding settings.
         """
+        x = x.to(next(self.parameters()).dtype)
         x = imagenet_norm_batch(x)
         x = F.relu(self.conv1(x))
         x = self.avgpool1(x)
@@ -236,6 +237,7 @@ class MediumPatchDescriptionNetwork(nn.Module):
                 ``(N, out_channels, H', W')``, where ``H'`` and ``W'`` are
                 determined by the network architecture and padding settings.
         """
+        x = x.to(next(self.parameters()).dtype)
         x = imagenet_norm_batch(x)
         x = F.relu(self.conv1(x))
         x = self.avgpool1(x)
@@ -424,6 +426,7 @@ class AutoEncoder(nn.Module):
                 where ``H'`` and ``W'`` are determined by the decoder architecture and
                 padding settings.
         """
+        x = x.to(next(self.parameters()).dtype)
         x = imagenet_norm_batch(x)
         x = self.encoder(x)
         return self.decoder(x, image_size)
@@ -510,6 +513,9 @@ class EfficientAdModel(nn.Module):
                 "qb_ae": torch.tensor(0.0),
             },
         )
+
+        
+
 
     @staticmethod
     def is_set(p_dic: nn.ParameterDict) -> bool:

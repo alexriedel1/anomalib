@@ -53,7 +53,7 @@ from lightning.pytorch.utilities.types import STEP_OUTPUT
 from torch import nn
 from torchvision.transforms.v2 import Compose, Normalize, Resize
 
-from anomalib import LearningType
+from anomalib import LearningType, PrecisionType
 from anomalib.data import Batch, InferenceBatch
 from anomalib.metrics import AUROC, F1Score
 from anomalib.metrics.evaluator import Evaluator
@@ -61,6 +61,7 @@ from anomalib.post_processing import PostProcessor
 from anomalib.pre_processing import PreProcessor
 from anomalib.utils import deprecate
 from anomalib.visualization import ImageVisualizer, Visualizer
+import warnings
 
 from .export_mixin import ExportMixin
 

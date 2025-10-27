@@ -47,7 +47,7 @@ from torch.utils.data import DataLoader
 from torchvision.datasets import ImageFolder
 from torchvision.transforms.v2 import CenterCrop, Compose, Normalize, RandomGrayscale, Resize, ToTensor
 
-from anomalib import LearningType
+from anomalib import LearningType, PrecisionType
 from anomalib.data import Batch
 from anomalib.data.transforms.utils import extract_transforms_by_type
 from anomalib.data.utils import DownloadInfo, download_and_extract
@@ -96,6 +96,9 @@ class EfficientAd(AnomalibModule):
         pad_maps (bool): Relevant if ``padding=False``. If ``True``, pads the output
             anomaly maps to match size of ``padding=True`` case.
             Defaults to ``True``.
+        precision (str, optional): Precision type for model computations.
+            Supported values are defined in :class:`PrecisionType`.
+            Defaults to ``PrecisionType.FLOAT32``.
         pre_processor (PreProcessor | bool, optional): Pre-processor used to transform
             input data before passing to model.
             Defaults to ``True``.
@@ -113,6 +116,7 @@ class EfficientAd(AnomalibModule):
         >>> model = EfficientAd(
         ...     imagenet_dir="./datasets/imagenette",
         ...     model_size="s",
+        ...     precision="float32",
         ...     lr=1e-4
         ... )
 
@@ -127,6 +131,7 @@ class EfficientAd(AnomalibModule):
         weight_decay: float = 0.00001,
         padding: bool = False,
         pad_maps: bool = True,
+        precision: str = PrecisionType.FLOAT32,
         pre_processor: PreProcessor | bool = True,
         post_processor: PostProcessor | bool = True,
         evaluator: Evaluator | bool = True,
@@ -152,6 +157,8 @@ class EfficientAd(AnomalibModule):
         self.batch_size: int = 1  # imagenet dataloader batch_size is 1 according to the paper
         self.lr: float = lr
         self.weight_decay: float = weight_decay
+
+        self.configure_precision(precision)
 
     def prepare_pretrained_model(self) -> None:
         """Prepare the pretrained teacher model.
@@ -289,8 +296,8 @@ class EfficientAd(AnomalibModule):
                 - 99.5% quantile scalar
         """
         maps_flat = reduce_tensor_elems(torch.cat(maps))
-        qa = torch.quantile(maps_flat, q=0.9).to(self.device)
-        qb = torch.quantile(maps_flat, q=0.995).to(self.device)
+        qa = torch.quantile(maps_flat.to(torch.float32), q=0.9).to(self.device)
+        qb = torch.quantile(maps_flat.to(torch.float32), q=0.995).to(self.device)
         return qa, qb
 
     @classmethod
@@ -447,6 +454,22 @@ class EfficientAd(AnomalibModule):
 
         predictions = self.model(batch.image)
         return batch.update(**predictions._asdict())
+    
+    def configure_precision(self, precision) -> None:
+        """Configure the model precision.
+        
+        Returns:
+            None: Configures model to use specified precision
+        """
+        if precision == PrecisionType.FLOAT16:
+            self.model = self.model.to(torch.bfloat16)
+        elif precision == PrecisionType.FLOAT32:
+            self.model = self.model.to(torch.float32)
+        else:
+            msg = f"""Unsupported precision type: {precision}.
+            Supported types are: {PrecisionType.FLOAT16}, {PrecisionType.FLOAT32}."""
+            raise ValueError(msg)
+        return None
 
     @property
     def trainer_arguments(self) -> dict[str, Any]:

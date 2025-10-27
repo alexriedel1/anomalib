@@ -166,14 +166,8 @@ class Patchcore(MemoryBankMixin, AnomalibModule):
         )
         self.coreset_sampling_ratio = coreset_sampling_ratio
 
-        if precision == PrecisionType.FLOAT16:
-            self.model = self.model.half()
-        elif precision == PrecisionType.FLOAT32:
-            self.model = self.model.float()
-        else:
-            msg = f"""Unsupported precision type: {precision}.
-            Supported types are: {PrecisionType.FLOAT16}, {PrecisionType.FLOAT32}."""
-            raise ValueError(msg)
+        self.configure_precision(precision)
+
 
     @classmethod
     def configure_pre_processor(
@@ -232,6 +226,22 @@ class Patchcore(MemoryBankMixin, AnomalibModule):
             None: PatchCore requires no optimization.
         """
         return
+
+    def configure_precision(self, precision) -> None:
+        """Configure the model precision.
+
+        Returns:
+            None: Configures model to use specified precision
+        """
+        if precision == PrecisionType.FLOAT16:
+            self.model = self.model.to(torch.float16)
+        elif precision == PrecisionType.FLOAT32:
+            self.model = self.model.to(torch.float32)
+        else:
+            msg = f"""Unsupported precision type: {precision}.
+            Supported types are: {PrecisionType.FLOAT16}, {PrecisionType.FLOAT32}."""
+            raise ValueError(msg)
+        return None
 
     def training_step(self, batch: Batch, *args, **kwargs) -> None:
         """Generate feature embedding of the batch.
