@@ -124,11 +124,6 @@ rocm = [
     "torchvision>=0.19.0",
     "pytorch-triton-rocm ; sys_platform == 'linux'",
 ]
-xpu = [
-    "torch>=2.4.0", # Note : Last tested with torch+xpu (2.9.1)
-    "torchvision>=0.19.0",
-    "pytorch-triton-xpu ; sys_platform == 'linux' or sys_platform == 'win32'",
-]
 
 
 full = ["anomalib[clip,openvino,loggers,notebooks,vlm,video]"]
@@ -165,8 +160,6 @@ conflicts = [
         { extra = "cu121" },
         { extra = "cu124" },
         { extra = "cu130" },
-        { extra = "rocm" },
-        { extra = "xpu" },
     ],
 ]
 
@@ -197,12 +190,6 @@ url = "https://download.pytorch.org/whl/cu130"
 explicit = true
 
 [[tool.uv.index]]
-name = "pytorch-rocm61"
-url = "https://download.pytorch.org/whl/rocm6.1"
-explicit = true
-
-
-[[tool.uv.index]]
 name = "pytorch-cu126"
 url = "https://download.pytorch.org/whl/cu126"
 explicit = true
@@ -215,8 +202,7 @@ torch = [
     { index = "pytorch-cu121", extra = "cu121" },
     { index = "pytorch-cu124", extra = "cu124" },
     { index = "pytorch-cu130", extra = "cu130" },
-    { index = "pytorch-rocm61", extra = "rocm" },
-    { index = "pytorch-xpu", extra = "xpu" },
+
 ]
 torchvision = [
     { index = "pytorch-cpu", extra = "cpu" },
@@ -224,14 +210,7 @@ torchvision = [
     { index = "pytorch-cu121", extra = "cu121" },
     { index = "pytorch-cu124", extra = "cu124" },
     { index = "pytorch-cu130", extra = "cu130" },
-    { index = "pytorch-rocm61", extra = "rocm" },
-    { index = "pytorch-xpu", extra = "xpu" },
-]
-pytorch-triton-rocm = [
-    { index = "pytorch-rocm61", extra = "rocm" },
-]
-pytorch-triton-xpu = [
-    { index = "pytorch-xpu", extra = "xpu" },
+
 ]
 
 
