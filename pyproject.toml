@@ -119,11 +119,7 @@ cu130 = [
     "torch>=2.4.0", # Note: onnx export fails with torch>=2.9.0 and cuda 13 isn't supported by <=2.8.0
     "torchvision>=0.19.0",
 ]
-rocm = [
-    "torch>=2.4.0,<=2.8.0",
-    "torchvision>=0.19.0",
-    "pytorch-triton-rocm ; sys_platform == 'linux'",
-]
+
 
 
 full = ["anomalib[clip,openvino,loggers,notebooks,vlm,video]"]
