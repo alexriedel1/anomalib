@@ -26,6 +26,7 @@ Image Models:
     - CSFlow (:class:`anomalib.models.image.Csflow`)
     - DFKDE (:class:`anomalib.models.image.Dfkde`)
     - DFM (:class:`anomalib.models.image.Dfm`)
+    - Dinomaly (:class:`anomalib.models.image.Dinomaly`)
     - DRAEM (:class:`anomalib.models.image.Draem`)
     - DSR (:class:`anomalib.models.image.Dsr`)
     - EfficientAd (:class:`anomalib.models.image.EfficientAd`)
@@ -38,11 +39,13 @@ Image Models:
     - STFPM (:class:`anomalib.models.image.Stfpm`)
     - SuperSimpleNet (:class:`anomalib.models.image.Supersimplenet`)
     - UFlow (:class:`anomalib.models.image.Uflow`)
+    - UniNet (:class:`anomalib.models.image.UniNet`)
     - VLM-AD (:class:`anomalib.models.image.VlmAd`)
     - WinCLIP (:class:`anomalib.models.image.WinClip`)
 
 Video Models:
     - AI-VAD (:class:`anomalib.models.video.AiVad`)
+    - FUVAS (:class:`anomalib.models.video.Fuvas`)
 """
 
 import logging
@@ -55,6 +58,7 @@ from anomalib.models.components import AnomalibModule
 from anomalib.utils.path import convert_snake_to_pascal_case, convert_to_snake_case, convert_to_title_case
 
 from .image import (
+    AnomalyDINO,
     Cfa,
     Cflow,
     Csflow,
@@ -93,17 +97,20 @@ class UnknownModelError(ModuleNotFoundError):
 
 
 __all__ = [
+    "AiVad",
+    "AnomalyDINO",
     "Cfa",
     "Cflow",
     "Csflow",
     "Dfkde",
     "Dfm",
-    "Draem",
     "Dinomaly",
+    "Draem",
     "Dsr",
     "EfficientAd",
     "Fastflow",
     "Fre",
+    "Fuvas",
     "Ganomaly",
     "Padim",
     "Patchcore",
@@ -114,8 +121,6 @@ __all__ = [
     "UniNet",
     "VlmAd",
     "WinClip",
-    "AiVad",
-    "Fuvas",
 ]
 
 logger = logging.getLogger(__name__)

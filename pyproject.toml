@@ -36,7 +36,7 @@ dependencies = [
     "docstring_parser",     # CLI help-formatter
     "rich_argparse",        # CLI help-formatter
     # Torch and Lightning dependencies
-    "lightning>=2.2",
+    "lightning>=2.6",
     "torchmetrics>=1.8.2",
     "lightning-utilities",
     # Deep learning models and utilities
@@ -58,7 +58,7 @@ dependencies = [
 
 [project.optional-dependencies]
 # Model-specific optional dependencies
-openvino = ["openvino>=2024.0", "nncf>=2.10.0", "onnx>=1.16.0"]
+openvino = ["openvino>=2024.0", "nncf>=2.10.0", "onnx>=1.16.0", "onnxscript"]
 clip = [
     # NOTE: open-clip-torch throws the following error on v2.26.1
     #   torch.onnx.errors.UnsupportedOperatorError: Exporting the operator
@@ -66,7 +66,7 @@ clip = [
     "open-clip-torch>=2.23.0,<2.26.1",
 ]
 vlm = ["ollama>=0.4.0", "openai", "python-dotenv", "transformers"]
-video = ["av>=10.0.0"]
+video = ["av>=10.0.0", "requests"]
 loggers = [
     "comet-ml>=3.31.7",
     "gradio>=4",
@@ -113,11 +113,29 @@ cu121 = [
 ]
 cu124 = [
     "torch>=2.4.0,<=2.8.0",
+<<<<<<< HEAD
     "torchvision>=0.19.0",
 ]
 cu130 = [
     "torch>=2.4.0", # Note: onnx export fails with torch>=2.9.0 and cuda 13 isn't supported by <=2.8.0
     "torchvision>=0.19.0",
+=======
+    "torchvision>=0.19.0",
+]
+cu130 = [
+    "torch>=2.4.0", # Note: onnx export fails with torch>=2.9.0 and cuda 13 isn't supported by <=2.8.0
+    "torchvision>=0.19.0",
+]
+rocm = [
+    "torch>=2.4.0,<=2.8.0",
+    "torchvision>=0.19.0",
+    "pytorch-triton-rocm ; sys_platform == 'linux'",
+]
+xpu = [
+    "torch>=2.4.0", # Note : Last tested with torch+xpu (2.9.1)
+    "torchvision>=0.19.0",
+    "pytorch-triton-xpu ; sys_platform == 'linux' or sys_platform == 'win32'",
+>>>>>>> origin/main
 ]
 
 
@@ -155,6 +173,11 @@ conflicts = [
         { extra = "cu121" },
         { extra = "cu124" },
         { extra = "cu130" },
+<<<<<<< HEAD
+=======
+        { extra = "rocm" },
+        { extra = "xpu" },
+>>>>>>> origin/main
     ],
 ]
 
@@ -182,6 +205,14 @@ explicit = true
 [[tool.uv.index]]
 name = "pytorch-cu130"
 url = "https://download.pytorch.org/whl/cu130"
+<<<<<<< HEAD
+=======
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-rocm61"
+url = "https://download.pytorch.org/whl/rocm6.1"
+>>>>>>> origin/main
 explicit = true
 
 
@@ -198,6 +229,11 @@ torch = [
     { index = "pytorch-cu121", extra = "cu121" },
     { index = "pytorch-cu124", extra = "cu124" },
     { index = "pytorch-cu130", extra = "cu130" },
+<<<<<<< HEAD
+=======
+    { index = "pytorch-rocm61", extra = "rocm" },
+    { index = "pytorch-xpu", extra = "xpu" },
+>>>>>>> origin/main
 ]
 torchvision = [
     { index = "pytorch-cpu", extra = "cpu" },
@@ -205,6 +241,17 @@ torchvision = [
     { index = "pytorch-cu121", extra = "cu121" },
     { index = "pytorch-cu124", extra = "cu124" },
     { index = "pytorch-cu130", extra = "cu130" },
+<<<<<<< HEAD
+=======
+    { index = "pytorch-rocm61", extra = "rocm" },
+    { index = "pytorch-xpu", extra = "xpu" },
+]
+pytorch-triton-rocm = [
+    { index = "pytorch-rocm61", extra = "rocm" },
+]
+pytorch-triton-xpu = [
+    { index = "pytorch-xpu", extra = "xpu" },
+>>>>>>> origin/main
 ]
 
 
