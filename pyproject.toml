@@ -113,13 +113,6 @@ cu121 = [
 ]
 cu124 = [
     "torch>=2.4.0,<=2.8.0",
-<<<<<<< HEAD
-    "torchvision>=0.19.0",
-]
-cu130 = [
-    "torch>=2.4.0", # Note: onnx export fails with torch>=2.9.0 and cuda 13 isn't supported by <=2.8.0
-    "torchvision>=0.19.0",
-=======
     "torchvision>=0.19.0",
 ]
 cu130 = [
@@ -135,7 +128,6 @@ xpu = [
     "torch>=2.4.0", # Note : Last tested with torch+xpu (2.9.1)
     "torchvision>=0.19.0",
     "pytorch-triton-xpu ; sys_platform == 'linux' or sys_platform == 'win32'",
->>>>>>> origin/main
 ]
 
 
@@ -173,11 +165,8 @@ conflicts = [
         { extra = "cu121" },
         { extra = "cu124" },
         { extra = "cu130" },
-<<<<<<< HEAD
-=======
         { extra = "rocm" },
         { extra = "xpu" },
->>>>>>> origin/main
     ],
 ]
 
@@ -205,14 +194,11 @@ explicit = true
 [[tool.uv.index]]
 name = "pytorch-cu130"
 url = "https://download.pytorch.org/whl/cu130"
-<<<<<<< HEAD
-=======
 explicit = true
 
 [[tool.uv.index]]
 name = "pytorch-rocm61"
 url = "https://download.pytorch.org/whl/rocm6.1"
->>>>>>> origin/main
 explicit = true
 
 
@@ -229,11 +215,8 @@ torch = [
     { index = "pytorch-cu121", extra = "cu121" },
     { index = "pytorch-cu124", extra = "cu124" },
     { index = "pytorch-cu130", extra = "cu130" },
-<<<<<<< HEAD
-=======
     { index = "pytorch-rocm61", extra = "rocm" },
     { index = "pytorch-xpu", extra = "xpu" },
->>>>>>> origin/main
 ]
 torchvision = [
     { index = "pytorch-cpu", extra = "cpu" },
@@ -241,8 +224,6 @@ torchvision = [
     { index = "pytorch-cu121", extra = "cu121" },
     { index = "pytorch-cu124", extra = "cu124" },
     { index = "pytorch-cu130", extra = "cu130" },
-<<<<<<< HEAD
-=======
     { index = "pytorch-rocm61", extra = "rocm" },
     { index = "pytorch-xpu", extra = "xpu" },
 ]
@@ -251,7 +232,6 @@ pytorch-triton-rocm = [
 ]
 pytorch-triton-xpu = [
     { index = "pytorch-xpu", extra = "xpu" },
->>>>>>> origin/main
 ]
 
 

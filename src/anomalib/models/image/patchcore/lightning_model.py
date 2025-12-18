@@ -93,13 +93,8 @@ class Patchcore(MemoryBankMixin, AnomalibModule):
             subsample embeddings. Defaults to ``0.1``.
         num_neighbors (int, optional): Number of nearest neighbors to use.
             Defaults to ``9``.
-<<<<<<< HEAD
-        precision (str, optional): Precision type for model computations.
-            Supported values are defined in :class:`PrecisionType`.
-=======
         precision (str | PrecisionType, optional): Precision type for model computations.
             Can be either a string (``"float32"``, ``"float16"``) or a :class:`PrecisionType` enum value.
->>>>>>> origin/main
             Defaults to ``PrecisionType.FLOAT32``.
         pre_processor (PreProcessor | bool, optional): Pre-processor instance or
             bool flag. Defaults to ``True``.
@@ -150,11 +145,7 @@ class Patchcore(MemoryBankMixin, AnomalibModule):
         pre_trained: bool = True,
         coreset_sampling_ratio: float = 0.1,
         num_neighbors: int = 9,
-<<<<<<< HEAD
-        precision: str = PrecisionType.FLOAT32,
-=======
         precision: str | PrecisionType = PrecisionType.FLOAT32,
->>>>>>> origin/main
         pre_processor: nn.Module | bool = True,
         post_processor: nn.Module | bool = True,
         evaluator: Evaluator | bool = True,
@@ -175,10 +166,6 @@ class Patchcore(MemoryBankMixin, AnomalibModule):
         )
         self.coreset_sampling_ratio = coreset_sampling_ratio
 
-<<<<<<< HEAD
-        self.configure_precision(precision)
-
-=======
         if isinstance(precision, str):
             precision = PrecisionType(precision.lower())
 
@@ -190,7 +177,6 @@ class Patchcore(MemoryBankMixin, AnomalibModule):
             msg = f"""Unsupported precision type: {precision}.
             Supported types are: {PrecisionType.FLOAT16}, {PrecisionType.FLOAT32}."""
             raise ValueError(msg)
->>>>>>> origin/main
 
     @classmethod
     def configure_pre_processor(
