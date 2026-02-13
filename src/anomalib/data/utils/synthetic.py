@@ -33,6 +33,11 @@ import cv2
 import pandas as pd
 from pandas import DataFrame, Series
 from torchvision.transforms.v2 import Transform
+from tqdm import tqdm
+import pandas as pd
+
+# enable tqdm for pandas
+tqdm.pandas()
 
 from anomalib.data.datasets.base.image import AnomalibDataset
 from anomalib.data.utils import Split, read_image
@@ -136,7 +141,7 @@ def make_synthetic_dataset(
         }
         return Series(out)
 
-    anomalous_samples = anomalous_samples.apply(augment, axis=1)
+    anomalous_samples = anomalous_samples.progress_apply(augment, axis=1)
 
     return pd.concat([normal_samples, anomalous_samples], ignore_index=True)
 
