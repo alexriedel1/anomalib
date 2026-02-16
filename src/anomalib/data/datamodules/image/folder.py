@@ -135,7 +135,7 @@ class Folder(AnomalibDataModule):
         val_split_ratio: float = 0.5,
         seed: int | None = None,
         anomaly_source_path: str = "./datasets/dtd",
-        anomaly_blend_factor: tuple = (0.03, 0.07)
+        anomaly_blend_factor: tuple = (0.03, 0.07),
     ) -> None:
         self._name = name
         self.root = root
@@ -160,7 +160,7 @@ class Folder(AnomalibDataModule):
             val_split_ratio=val_split_ratio,
             seed=seed,
             anomaly_source_path=anomaly_source_path,
-            anomaly_blend_factor=anomaly_blend_factor
+            anomaly_blend_factor=anomaly_blend_factor,
         )
 
         self.normal_split_ratio = normal_split_ratio

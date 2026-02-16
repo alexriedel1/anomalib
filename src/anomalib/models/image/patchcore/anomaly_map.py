@@ -27,10 +27,10 @@ See Also:
         Gaussian blur module used for smoothing anomaly maps
 """
 
+import kornia
 import torch
 from torch import nn
 from torch.nn import functional as F  # noqa: N812
-import kornia
 
 
 class AnomalyMapGenerator(nn.Module):
@@ -79,7 +79,11 @@ class AnomalyMapGenerator(nn.Module):
             anomaly_map = patch_scores
         else:
             anomaly_map = F.interpolate(patch_scores, size=(image_size[0], image_size[1]))
-        return kornia.filters.gaussian_blur2d(anomaly_map, (self.kernel_size, self.kernel_size), (self.sigma, self.sigma))
+        return kornia.filters.gaussian_blur2d(
+            anomaly_map,
+            (self.kernel_size, self.kernel_size),
+            (self.sigma, self.sigma),
+        )
 
     def forward(
         self,

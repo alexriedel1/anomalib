@@ -454,10 +454,10 @@ class EfficientAd(AnomalibModule):
 
         predictions = self.model(batch.image)
         return batch.update(**predictions._asdict())
-    
+
     def configure_precision(self, precision) -> None:
         """Configure the model precision.
-        
+
         Returns:
             None: Configures model to use specified precision
         """
@@ -469,7 +469,6 @@ class EfficientAd(AnomalibModule):
             msg = f"""Unsupported precision type: {precision}.
             Supported types are: {PrecisionType.FLOAT16}, {PrecisionType.FLOAT32}."""
             raise ValueError(msg)
-        return None
 
     @property
     def trainer_arguments(self) -> dict[str, Any]:

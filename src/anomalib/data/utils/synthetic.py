@@ -34,7 +34,6 @@ import pandas as pd
 from pandas import DataFrame, Series
 from torchvision.transforms.v2 import Transform
 from tqdm import tqdm
-import pandas as pd
 
 # enable tqdm for pandas
 tqdm.pandas()
@@ -107,7 +106,6 @@ def make_synthetic_dataset(
     normal_samples = source_samples.drop(anomalous_samples.index)
     anomalous_samples = anomalous_samples.reset_index(drop=True)
 
-    
     def augment(sample: Series) -> Series:
         """Apply synthetic anomalous augmentation to a sample.
 
@@ -171,9 +169,14 @@ class SyntheticAnomalyDataset(AnomalibDataset):
         100
     """
 
-    def __init__(self, augmentations: Transform | None, source_samples: DataFrame, 
-                 dataset_name: str, anomaly_source_path: str, 
-                 anomaly_blend_factor: tuple ) -> None:
+    def __init__(
+        self,
+        augmentations: Transform | None,
+        source_samples: DataFrame,
+        dataset_name: str,
+        anomaly_source_path: str,
+        anomaly_blend_factor: tuple,
+    ) -> None:
         super().__init__(augmentations=augmentations)
 
         self.source_samples = source_samples
@@ -213,8 +216,8 @@ class SyntheticAnomalyDataset(AnomalibDataset):
     def from_dataset(
         cls: type["SyntheticAnomalyDataset"],
         dataset: AnomalibDataset,
-        anomaly_source_path: str = "./datasets/dtd", 
-        anomaly_blend_factor: tuple = (0.01, 0.2)
+        anomaly_source_path: str = "./datasets/dtd",
+        anomaly_blend_factor: tuple = (0.01, 0.2),
     ) -> "SyntheticAnomalyDataset":
         """Create synthetic dataset from existing dataset of normal images.
 
@@ -229,8 +232,13 @@ class SyntheticAnomalyDataset(AnomalibDataset):
             >>> normal_dataset = Dataset(...)
             >>> synthetic = SyntheticAnomalyDataset.from_dataset(normal_dataset)
         """
-        return cls(augmentations=dataset.augmentations, source_samples=dataset.samples, dataset_name=dataset.name, 
-                   anomaly_source_path=anomaly_source_path, anomaly_blend_factor=anomaly_blend_factor)
+        return cls(
+            augmentations=dataset.augmentations,
+            source_samples=dataset.samples,
+            dataset_name=dataset.name,
+            anomaly_source_path=anomaly_source_path,
+            anomaly_blend_factor=anomaly_blend_factor,
+        )
 
     def __copy__(self) -> "SyntheticAnomalyDataset":
         """Return shallow copy and prevent cleanup of original.

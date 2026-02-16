@@ -514,9 +514,6 @@ class EfficientAdModel(nn.Module):
             },
         )
 
-        
-
-
     @staticmethod
     def is_set(p_dic: nn.ParameterDict) -> bool:
         """Check if any parameters in the dictionary are non-zero.

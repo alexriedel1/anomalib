@@ -250,7 +250,6 @@ class Patchcore(MemoryBankMixin, AnomalibModule):
             msg = f"""Unsupported precision type: {precision}.
             Supported types are: {PrecisionType.FLOAT16}, {PrecisionType.FLOAT32}."""
             raise ValueError(msg)
-        return None
 
     def training_step(self, batch: Batch, *args, **kwargs) -> None:
         """Generate feature embedding of the batch.

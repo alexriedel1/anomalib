@@ -131,7 +131,13 @@ class GaussianBlur2d(nn.Module):
             input_tensor = F.pad(input_tensor, self.padding_shape, mode=self.border_type)
 
         # convolve the tensor with the kernel.
-        output = F.conv2d(input_tensor.type(torch.float32), self.kernel.type(torch.float32), groups=self.channels, padding=0, stride=1)
+        output = F.conv2d(
+            input_tensor.type(torch.float32),
+            self.kernel.type(torch.float32),
+            groups=self.channels,
+            padding=0,
+            stride=1,
+        )
 
         if self.padding == "same":
             out = output.view(batch, channel, height, width)

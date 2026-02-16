@@ -108,7 +108,7 @@ class AnomalibDataModule(LightningDataModule, ABC):
         test_split_ratio: float | None = None,
         seed: int | None = None,
         anomaly_source_path: str = "./datasets/dtd",
-        anomaly_blend_factor: tuple = (0.01, 0.2)
+        anomaly_blend_factor: tuple = (0.01, 0.2),
     ) -> None:
         super().__init__()
         self.train_batch_size = train_batch_size
@@ -121,7 +121,7 @@ class AnomalibDataModule(LightningDataModule, ABC):
         self.seed = seed
 
         self.anomaly_source_path = anomaly_source_path
-        self.anomaly_blend_factor= anomaly_blend_factor
+        self.anomaly_blend_factor = anomaly_blend_factor
 
         self.train_augmentations = train_augmentations or augmentations
         self.val_augmentations = val_augmentations or augmentations
@@ -324,9 +324,11 @@ class AnomalibDataModule(LightningDataModule, ABC):
         if self.test_split_mode == TestSplitMode.FROM_DIR:
             self.test_data += normal_test_data
         elif self.test_split_mode == TestSplitMode.SYNTHETIC:
-            self.test_data = SyntheticAnomalyDataset.from_dataset(normal_test_data, 
-                                                                  anomaly_source_path=self.anomaly_source_path,
-                                                                  anomaly_blend_factor=self.anomaly_blend_factor)
+            self.test_data = SyntheticAnomalyDataset.from_dataset(
+                normal_test_data,
+                anomaly_source_path=self.anomaly_source_path,
+                anomaly_blend_factor=self.anomaly_blend_factor,
+            )
         elif self.test_split_mode != TestSplitMode.NONE:
             msg = f"Unsupported Test Split Mode: {self.test_split_mode}"
             raise ValueError(msg)
@@ -366,8 +368,11 @@ class AnomalibDataModule(LightningDataModule, ABC):
                 self.val_split_ratio,
                 seed=self.seed,
             )
-            self.val_data = SyntheticAnomalyDataset.from_dataset(normal_val_data, anomaly_source_path=self.anomaly_source_path,
-                                                                  anomaly_blend_factor=self.anomaly_blend_factor)
+            self.val_data = SyntheticAnomalyDataset.from_dataset(
+                normal_val_data,
+                anomaly_source_path=self.anomaly_source_path,
+                anomaly_blend_factor=self.anomaly_blend_factor,
+            )
         elif self.val_split_mode != ValSplitMode.NONE:
             msg = f"Unknown validation split mode: {self.val_split_mode}"
             raise ValueError(msg)
