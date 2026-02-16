@@ -35,13 +35,12 @@ from pandas import DataFrame, Series
 from torchvision.transforms.v2 import Transform
 from tqdm import tqdm
 
-# enable tqdm for pandas
-tqdm.pandas()
-
 from anomalib.data.datasets.base.image import AnomalibDataset
 from anomalib.data.utils import Split, read_image
 from anomalib.data.utils.generators.perlin import PerlinAnomalyGenerator
 
+# enable tqdm for pandas
+tqdm.pandas()
 logger = logging.getLogger(__name__)
 
 
