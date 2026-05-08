@@ -38,10 +38,16 @@ repos:
 
   # Dockerfile linting
   - repo: https://github.com/AleksaC/hadolint-py
-    rev: v2.12.0.2
+    rev: v2.14.0
     hooks:
       - id: hadolint
         files: Dockerfile$
         args:
           - "--ignore=DL3008" # Pin versions in apt-get install
           - "--ignore=DL4006" # Use bash in scripts
+
+  # gitleaks detects secrets (API keys, tokens, credentials) in code.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks

@@ -12,7 +12,7 @@
 [License](LICENSE)
 
 [![python](https://img.shields.io/badge/python-3.10%2B-green)]()
-[![pytorch](https://img.shields.io/badge/pytorch-2.0%2B-orange)]()
+[![pytorch](https://img.shields.io/badge/pytorch-2.6%2B-orange)]()
 [![lightning](https://img.shields.io/badge/lightning-2.2%2B-blue)]()
 [![openvino](https://img.shields.io/badge/openvino-2024.0%2B-purple)]()
 
@@ -31,24 +31,13 @@
 
 ---
 
-> 🌟 **Announcing v2.2.0 Release!** 🌟
+> 🌟 **Announcing v2.4.1 Release!** 🌟
 >
-> We’re thrilled to announce the release of Anomalib v2.2.0, packed with new datasets, metrics, and performance improvements! Some of the highlights are:
-> New datasets
+> This patch release fixes DDP training issues.
 >
-> - **3D-ADAM** : A comprehensive dataset for 3D anomaly detection in additive manufacturing.
-> - **BMAD** : Benchmarks for Medical Anomaly Detection, featuring six datasets across five medical domains
+> Key Fixes
 >
-> New metrics
->
-> - **PGn and PBn (CVPR2025)** : Presorted good/bad metrics for more insightful performance evaluation.
-> - **Histogram visualization** of anomaly scores for better interpretability.
->
-> Other Improvements
->
-> - Faster coreset selection for PatchCore model, resulting in ~30% quicker training.
-> - Reduced memory usage for memory bank–based models like PatchCore, PaDiM, and DfKDE.
-> - Many more code and documentation updates.
+> - Fixed DDP adaptive F1 score computation.
 >
 > We value your input! Please share feedback via [GitHub Issues](https://github.com/open-edge-platform/anomalib/issues) or our [Discussions](https://github.com/open-edge-platform/anomalib/discussions)
 
@@ -97,11 +86,11 @@ To ensure compatibility with your hardware, you can specify a backend during ins
 # CPU support (default, works on all platforms)
 uv pip install "anomalib[cpu]"
 
-# CUDA 12.4 support (Linux/Windows with NVIDIA GPU)
-uv pip install "anomalib[cu124]"
+# CUDA 12.6 support (Linux/Windows with NVIDIA GPU)
+uv pip install "anomalib[cu126]"
 
-# CUDA 12.1 support (Linux/Windows with NVIDIA GPU)
-uv pip install "anomalib[cu121]"
+# CUDA 13.0 support (Linux/Windows with NVIDIA GPU)
+uv pip install "anomalib[cu130]"
 
 # CUDA 11.8 support (Linux/Windows with NVIDIA GPU)
 uv pip install "anomalib[cu118]"
@@ -117,7 +106,7 @@ uv pip install "anomalib[xpu]"
 The same extras can be used with `pip`:
 
 ```bash
-pip install "anomalib[cu124]"
+pip install "anomalib[cu130]"
 ```
 
 </details>
@@ -128,8 +117,8 @@ pip install "anomalib[cu124]"
 Anomalib includes most dependencies by default. For specialized features, you may need additional optional dependencies. Remember to include your hardware-specific extra.
 
 ```bash
-# Example: Install with OpenVINO support and CUDA 12.4
-uv pip install "anomalib[openvino,cu124]"
+# Example: Install with OpenVINO support and CUDA 13.0
+uv pip install "anomalib[openvino,cu130]"
 
 # Example: Install all optional dependencies for a CPU-only setup
 uv pip install "anomalib[full,cpu]"
@@ -166,8 +155,8 @@ uv venv
 # Sync with the lockfile for a specific backend (e.g., CPU)
 uv sync --extra cpu
 
-# Or for a different backend like CUDA 12.4
-uv sync --extra cu124
+# Or for a different backend like CUDA 13.0
+uv sync --extra cu130
 
 # To set up a full development environment
 uv sync --extra dev --extra cpu
@@ -349,7 +338,7 @@ For more information on each, refer to the respective README files.
 
 ```bash
 cd application/backend
-uv sync --extra xpu # or uv sync --extra cu124 for CUDA 12.4, uv sync --extra cpu for CPU
+uv sync --extra xpu # or uv sync --extra cu130 for CUDA 13.0, uv sync --extra cpu for CPU
 ```
 
 ### Setup Frontend Dependencies

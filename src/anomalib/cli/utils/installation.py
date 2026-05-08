@@ -13,6 +13,7 @@ import json
 import os
 import platform
 import re
+import subprocess
 from importlib.metadata import requires
 from pathlib import Path
 from warnings import warn
@@ -21,11 +22,13 @@ from packaging.requirements import Requirement
 from packaging.version import Version
 
 AVAILABLE_TORCH_VERSIONS = {
-    "2.0.0": {"torchvision": "0.15.1", "cuda": ("11.7", "11.8")},
-    "2.0.1": {"torchvision": "0.15.2", "cuda": ("11.7", "11.8")},
-    "2.1.1": {"torchvision": "0.16.1", "cuda": ("11.8", "12.1")},
-    "2.1.2": {"torchvision": "0.16.2", "cuda": ("11.8", "12.1")},
-    "2.2.0": {"torchvision": "0.16.2", "cuda": ("11.8", "12.1")},
+    # NOTE: Minimum torch>=2.6.0 required due to Critical CVE-2025-32434
+    #   (torch.load weights_only=True RCE, patched in 2.6.0)
+    "2.6.0": {"torchvision": "0.21.0", "cuda": ("11.8", "12.6")},
+    "2.7.0": {"torchvision": "0.22.0", "cuda": ("11.8", "12.6")},
+    "2.7.1": {"torchvision": "0.22.1", "cuda": ("11.8", "12.6")},
+    "2.8.0": {"torchvision": "0.23.0", "cuda": ("12.6", "12.8")},
+    "2.9.0": {"torchvision": "0.24.0", "cuda": ("12.6", "12.8", "13.0")},
 }
 
 
@@ -183,8 +186,13 @@ def get_cuda_version() -> str | None:
                     return ".".join(cuda_version_parts[:2])
     # 2. 'nvcc --version' check & without version.json case
     try:
-        result = os.popen(cmd="nvcc --version")
-        output = result.read()
+        result = subprocess.run(
+            ["nvcc", "--version"],  # noqa: S607
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        output = result.stdout
 
         cuda_version_pattern = r"cuda_(\d+\.\d+)"
         cuda_version_match = re.search(cuda_version_pattern, output)
@@ -316,19 +324,19 @@ def get_torch_install_args(requirement: str | Requirement) -> list[str]:
 
     Example:
         ```python
-        requirement = "torch>=2.0.0"
+        requirement = "torch>=2.9.0"
         get_torch_install_args(requirement)
         # Returns:
         [
             '--extra-index-url',
-            'https://download.pytorch.org/whl/cu118',
-            'torch>=2.0.0',
-            'torchvision==0.15.1'
+            'https://download.pytorch.org/whl/cu130',
+            'torch>=2.9.0',
+            'torchvision>=0.24.0'
         ]
         ```
 
     Test:
-        >>> args = get_torch_install_args("torch>=2.0.0")
+        >>> args = get_torch_install_args("torch>=2.9.0")
         >>> isinstance(args, list)
         True
         >>> all(isinstance(arg, str) for arg in args)

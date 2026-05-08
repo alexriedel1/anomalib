@@ -61,7 +61,6 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False),
         sa.ForeignKeyConstraint(["project_id"], ["projects.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("name", "project_id"),
     )
 
     # Create sinks table
@@ -78,7 +77,6 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(), server_default=sa.text("(CURRENT_TIMESTAMP)"), nullable=False),
         sa.ForeignKeyConstraint(["project_id"], ["projects.id"]),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("name", "project_id"),
     )
 
     # Create media table
@@ -136,7 +134,7 @@ def upgrade() -> None:
         sa.Column("source_id", sa.Text(), nullable=True),
         sa.Column("sink_id", sa.Text(), nullable=True),
         sa.Column("model_id", sa.Text(), nullable=True),
-        sa.Column("inference_device", sa.String(length=64), nullable=True),
+        sa.Column("inference_device", sa.String(length=64), nullable=False, server_default="CPU"),
         sa.Column("overlay", sa.Boolean(), nullable=True),
         sa.Column("is_running", sa.Boolean(), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False),

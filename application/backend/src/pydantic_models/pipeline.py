@@ -3,13 +3,13 @@
 
 from enum import StrEnum
 from functools import cached_property
-from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from pydantic_models.model import Model
 from pydantic_models.sink import Sink
 from pydantic_models.source import Source
+from utils.short_uuid import ShortUUID
 
 
 class PipelineStatus(StrEnum):
@@ -35,21 +35,23 @@ class PipelineStatus(StrEnum):
 
 
 class Pipeline(BaseModel):
-    project_id: UUID  # ID of the project this pipeline belongs to
+    project_id: ShortUUID  # ID of the project this pipeline belongs to
     source: Source | None = None  # None if disconnected
     sink: Sink | None = None  # None if disconnected
     model: Model | None = None  # None if no model is selected
-    source_id: UUID | None = Field(
+    source_id: ShortUUID | None = Field(
         default=None,
         exclude=True,
     )  # ID of the source, used for DB mapping, not exposed in API
-    sink_id: UUID | None = Field(default=None, exclude=True)  # ID of the sink, used for DB mapping, not exposed in API
-    model_id: UUID | None = Field(
+    sink_id: ShortUUID | None = Field(
+        default=None, exclude=True
+    )  # ID of the sink, used for DB mapping, not exposed in API
+    model_id: ShortUUID | None = Field(
         default=None,
         exclude=True,
     )  # ID of the model, used for DB mapping, not exposed in API
     status: PipelineStatus = PipelineStatus.IDLE  # Current status of the pipeline
-    inference_device: str | None = Field(default=None)
+    inference_device: str = Field(default="CPU")
     overlay: bool | None = Field(default=None)
 
     # TODO: can be confused with status.is_running / is_active, consider refactoring
@@ -96,5 +98,5 @@ class Pipeline(BaseModel):
         return self
 
     @cached_property
-    def id(self) -> UUID:
+    def id(self) -> ShortUUID:
         return self.project_id

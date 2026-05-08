@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     static_files_dir: str | None = Field(default=None, alias="STATIC_FILES_DIR")
 
     # Server
-    host: str = Field(default="0.0.0.0", alias="HOST")  # noqa: S104
+    host: str = Field(default="localhost", alias="HOST")
     port: int = Field(default=8000, alias="PORT")
 
     # CORS
@@ -46,8 +46,8 @@ class Settings(BaseSettings):
     db_echo: bool = Field(default=False, alias="DB_ECHO")
 
     # Alembic
-    alembic_config_path: str = str(_MODULE_DIR / "alembic.ini")
-    alembic_script_location: str = str(_MODULE_DIR / "alembic")
+    alembic_config_path: str = Field(default=str(_MODULE_DIR / "alembic.ini"), alias="ALEMBIC_CONFIG_PATH")
+    alembic_script_location: str = Field(default=str(_MODULE_DIR / "alembic"), alias="ALEMBIC_SCRIPT_LOCATION")
 
     # Proxy settings
     no_proxy: str = Field(default="localhost,127.0.0.1,::1", alias="no_proxy")
