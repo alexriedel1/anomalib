@@ -4,6 +4,13 @@
 :margin: 1 1 0 0
 :gutter: 1
 
+:::{grid-item-card} {material-regular}`model_training;1.5em` AnomalyVFM
+:link: ./anomalyvfm
+:link-type: doc
+
+Transforming Vision Foundation Models into Zero-Shot Anomaly Detectors
+:::
+
 :::{grid-item-card} {material-regular}`model_training;1.5em` AnomalyDINO
 :link: ./anomaly_dino
 :link-type: doc
@@ -75,6 +82,13 @@ DSR – A Dual Subspace Re-Projection Network for Surface Anomaly Detection
 EfficientAD: Accurate Visual Anomaly Detection at Millisecond-Level Latencies
 :::
 
+:::{grid-item-card} {material-regular}`model_training;1.5em` INP-Former
+:link: ./inp_former
+:link-type: doc
+
+Exploring Intrinsic Normal Prototypes within a Single Image for Universal Anomaly Detection
+:::
+
 :::{grid-item-card} {material-regular}`model_training;1.5em` FastFlow
 :link: ./fastflow
 :link-type: doc
@@ -94,6 +108,13 @@ FRE: A Fast Method For Anomaly Detection And Segmentation
 :link-type: doc
 
 GANomaly: Semi-Supervised Anomaly Detection via Adversarial Training
+:::
+
+:::{grid-item-card} {material-regular}`model_training;1.5em` GLASS
+:link: ./glass
+:link-type: doc
+
+A Unified Anomaly Synthesis Strategy with Gradient Ascent for Industrial Anomaly Detection and Localization
 :::
 
 :::{grid-item-card} {material-regular}`model_training;1.5em` GeneralAD
@@ -185,6 +206,7 @@ WinCLIP: Zero-/Few-Shot Anomaly Classification and Segmentation
 :caption: Data
 :hidden:
 
+./anomalyvfm
 ./anomaly_dino
 ./cfa
 ./cflow
@@ -198,7 +220,9 @@ WinCLIP: Zero-/Few-Shot Anomaly Classification and Segmentation
 ./fastflow
 ./fre
 ./ganomaly
+./glass
 ./general_ad
+./inp_former
 ./l2bt
 ./padim
 ./patchcore
