@@ -24,6 +24,7 @@ Image Models:
     - AnomalyVFM (:class:`anomalib.models.image.AnomalyVFM`)
     - CFA (:class:`anomalib.models.image.Cfa`)
     - Cflow (:class:`anomalib.models.image.Cflow`)
+    - CFM (:class:`anomalib.models.image.CFM`)
     - CSFlow (:class:`anomalib.models.image.Csflow`)
     - DFKDE (:class:`anomalib.models.image.Dfkde`)
     - DFM (:class:`anomalib.models.image.Dfm`)
@@ -42,6 +43,7 @@ Image Models:
     - Reverse Distillation (:class:`anomalib.models.image.ReverseDistillation`)
     - STFPM (:class:`anomalib.models.image.Stfpm`)
     - SuperSimpleNet (:class:`anomalib.models.image.Supersimplenet`)
+    - SuperADD (:class:`anomalib.models.image.SuperADD`)
     - UFlow (:class:`anomalib.models.image.Uflow`)
     - UniNet (:class:`anomalib.models.image.UniNet`)
     - VLM-AD (:class:`anomalib.models.image.VlmAd`)
@@ -62,6 +64,7 @@ from anomalib.models.components import AnomalibModule
 from anomalib.utils.path import convert_snake_to_pascal_case, convert_to_snake_case, convert_to_title_case
 
 from .image import (
+    CFM,
     L2BT,
     AnomalyDINO,
     AnomalyVFM,
@@ -85,6 +88,7 @@ from .image import (
     Patchflow,
     ReverseDistillation,
     Stfpm,
+    SuperADD,
     Supersimplenet,
     Uflow,
     UniNet,
@@ -110,6 +114,7 @@ __all__ = [
     "AiVad",
     "AnomalyDINO",
     "AnomalyVFM",
+    "CFM",
     "Cfa",
     "Cflow",
     "Csflow",
@@ -132,7 +137,9 @@ __all__ = [
     "Patchflow",
     "ReverseDistillation",
     "Stfpm",
+    "SuperADD",
     "Supersimplenet",
+    "SuperADD",
     "Uflow",
     "UniNet",
     "VlmAd",

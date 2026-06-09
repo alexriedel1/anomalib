@@ -27,6 +27,7 @@ Available Models:
     - :class:`AnomalyDINO`: Boost Memorybank Models with DINOv2
     - :class:`Cfa`: Contrastive Feature Aggregation
     - :class:`Cflow`: Conditional Normalizing Flow
+    - :class:`CFM`: Crossmodal Feature Mapping
     - :class:`Csflow`: Conditional Split Flow
     - :class:`Dfkde`: Deep Feature Kernel Density Estimation
     - :class:`Dfm`: Deep Feature Modeling
@@ -44,6 +45,7 @@ Available Models:
     - :class:`Patchflow`: Patch Flow
     - :class:`ReverseDistillation`: Reverse Knowledge Distillation
     - :class:`Stfpm`: Student-Teacher Feature Pyramid Matching
+    - :class:`SuperADD`: Supervised Anomaly Detection with Additive Feature Fusion
     - :class:`SuperSimpleNet`: SuperSimpleNet
     - :class:`Uflow`: Unsupervised Flow
     - :class:`UniNet`: Student-Teacher Contrastive Learning Model
@@ -55,6 +57,7 @@ from .anomaly_dino import AnomalyDINO
 from .anomalyvfm import AnomalyVFM
 from .cfa import Cfa
 from .cflow import Cflow
+from .cfm import CFM
 from .csflow import Csflow
 from .dfkde import Dfkde
 from .dfm import Dfm
@@ -74,6 +77,7 @@ from .patchcore import Patchcore
 from .patchflow import Patchflow
 from .reverse_distillation import ReverseDistillation
 from .stfpm import Stfpm
+from .super_add import SuperADD
 from .supersimplenet import Supersimplenet
 from .uflow import Uflow
 from .uninet import UniNet
@@ -85,6 +89,7 @@ __all__ = [
     "AnomalyDINO",
     "Cfa",
     "Cflow",
+    "CFM",
     "Csflow",
     "Dfkde",
     "Dfm",
@@ -105,6 +110,7 @@ __all__ = [
     "ReverseDistillation",
     "Stfpm",
     "Supersimplenet",
+    "SuperADD",
     "Uflow",
     "UniNet",
     "VlmAd",
