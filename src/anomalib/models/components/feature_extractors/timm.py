@@ -26,8 +26,10 @@ Example:
     torch.Size([32, 64, 64, 64])
 """
 
+import functools
 import logging
 from collections.abc import Sequence
+from typing import cast
 
 import timm
 import torch
@@ -37,6 +39,31 @@ from torchvision.models.feature_extraction import create_feature_extractor
 from .utils import dryrun_find_featuremap_dims
 
 logger = logging.getLogger(__name__)
+
+
+def _disable_pos_embed_antialiasing() -> None:
+    """Force timm ViT pos-embed resampling to ``antialias=False``.
+
+    timm's ``VisionTransformer._pos_embed`` uses interpolation with
+    ``antialias=True``. This operation isn't supported in ONNX export
+    and is patched off. It doesn't affect model performance.
+    """
+    try:
+        import timm.models.vision_transformer as vit
+    except ImportError:
+        return
+
+    original = getattr(vit, "resample_abs_pos_embed", None)
+    if original is None or getattr(original, "_anomalib_no_antialias", False):
+        return
+
+    @functools.wraps(original)
+    def _no_antialias(*args, **kwargs):  # noqa: ANN202
+        kwargs["antialias"] = False
+        return original(*args, **kwargs)
+
+    setattr(_no_antialias, "_anomalib_no_antialias", True)  # noqa: B010
+    vit.resample_abs_pos_embed = _no_antialias
 
 
 class TimmFeatureExtractor(nn.Module):
@@ -63,18 +90,23 @@ class TimmFeatureExtractor(nn.Module):
             backbone. Required for training models like STFPM. Defaults to
             ``False``.
         output_fmt (str, optional): Feature output format, either ``"NCHW"`` (spatial
-            maps via ``features_only``) or ``"NLC"`` (token sequences via
-            ``forward_intermediates``). Defaults to ``"NCHW"``.
-        return_class_token (bool, optional): ``"NLC"`` mode only. If ``True``, the
-            prefix tokens (class token followed by register tokens) are prepended to
-            the patch tokens, yielding the full ``[CLS, reg..., patches]`` sequence.
+            maps) or ``"NLC"`` (token sequences). CNN backbones produce ``"NCHW"`` maps via
+            timm's ``features_only`` API. Transformer backbones (name contains ``"vit"``, or
+            ``output_fmt="NLC"``) use ``forward_intermediates``, which also reshapes patch
+            tokens into ``"NCHW"`` spatial maps when requested (e.g. for PatchCore).
+            Defaults to ``"NCHW"``.
+        return_class_token (bool, optional): Transformer ``"NLC"`` output only. If ``True``,
+            the prefix tokens (class token followed by register tokens) are prepended to the
+            patch tokens, yielding the full ``[CLS, reg..., patches]`` sequence.
             Defaults to ``False``.
-        norm (bool, optional): ``"NLC"`` mode only. If ``True``, the backbone's final
-            normalization layer is applied to each returned intermediate. Defaults to
-            ``False``.
-        dynamic_img_size (bool, optional): Passed to ``timm.create_model``. Allows ViT
-            backbones to accept input sizes other than their default ``img_size`` by
-            interpolating positional embeddings. Defaults to ``False``.
+        norm (bool, optional): Transformer backbones only. If ``True``, the backbone's final
+            normalization layer is applied to each returned intermediate, yielding well-scaled
+            features for nearest-neighbor search (matches AnomalyDINO). Ignored by CNN
+            ``features_only`` backbones. Defaults to ``True``.
+        dynamic_img_size (bool, optional): Passed to ``timm.create_model`` for transformer
+            backbones. Allows ViT backbones to accept input sizes other than their default
+            ``img_size`` by interpolating positional embeddings. Ignored by CNN backbones.
+            Defaults to ``True``.
 
     Attributes:
         backbone (str | nn.Module): Name of the backbone model or actual torch backbone model.
@@ -83,6 +115,8 @@ class TimmFeatureExtractor(nn.Module):
         requires_grad (bool): Whether gradients are computed.
         feature_extractor (nn.Module): The underlying timm model.
         out_dims (list[int]): Output dimensions for each extracted layer.
+        reductions (list[int]): ``"NCHW"`` mode only. Reduction stride of each extracted
+            feature map relative to the input resolution.
         patch_size (int): ``"NLC"`` mode only. Patch size of the ViT backbone.
         num_prefix_tokens (int): ``"NLC"`` mode only. Number of prefix tokens
             (class token + register tokens).
@@ -131,8 +165,8 @@ class TimmFeatureExtractor(nn.Module):
         requires_grad: bool = False,
         output_fmt: str = "NCHW",
         return_class_token: bool = False,
-        norm: bool = False,
-        dynamic_img_size: bool = False,
+        norm: bool = True,
+        dynamic_img_size: bool = True,
     ) -> None:
         super().__init__()
 
@@ -146,6 +180,11 @@ class TimmFeatureExtractor(nn.Module):
         self.output_fmt = output_fmt
         self.return_class_token = return_class_token
         self.norm = norm
+        self.out_dims: Sequence[int]
+
+        # ViT backbones are extracted via ``forward_intermediates`` (the ``features_only`` API cannot
+        # handle dynamic ViT input sizes).
+        self._uses_intermediates = isinstance(backbone, str) and (output_fmt == "NLC" or "vit" in backbone.lower())
 
         if isinstance(backbone, nn.Module):
             self.feature_extractor = create_feature_extractor(
@@ -153,10 +192,10 @@ class TimmFeatureExtractor(nn.Module):
                 return_nodes={layer: layer for layer in self.layers},
             )
             layer_metadata = dryrun_find_featuremap_dims(self.feature_extractor, (256, 256), layers=self.layers)
-            self.out_dims = [feature_info["num_features"] for layer_name, feature_info in layer_metadata.items()]
+            self.out_dims = [cast("int", feature_info["num_features"]) for feature_info in layer_metadata.values()]
 
-        elif isinstance(backbone, str) and output_fmt == "NLC":
-            # Token mode: use the full model with forward_intermediates (e.g. ViT/DINOv2).
+        elif self._uses_intermediates:
+            # Transformer mode: use the full model with forward_intermediates (e.g. ViT/DINOv2).
             self.idx = [self._block_name_to_idx(layer) for layer in self.layers]
             self.feature_extractor = timm.create_model(
                 backbone,
@@ -164,6 +203,7 @@ class TimmFeatureExtractor(nn.Module):
                 pretrained_cfg=None,
                 dynamic_img_size=dynamic_img_size,
             )
+            _disable_pos_embed_antialiasing()
             self.patch_size = self.feature_extractor.patch_embed.patch_size[0]
             self.num_prefix_tokens = getattr(self.feature_extractor, "num_prefix_tokens", 1)
             self.num_register_tokens = self.num_prefix_tokens - 1
@@ -181,6 +221,7 @@ class TimmFeatureExtractor(nn.Module):
                 out_indices=self.idx,
             )
             self.out_dims = self.feature_extractor.feature_info.channels()
+            self.reductions = self.feature_extractor.feature_info.reduction()
 
         else:
             msg = f"Backbone of type {type(backbone)} must be of type str or nn.Module."
@@ -260,7 +301,7 @@ class TimmFeatureExtractor(nn.Module):
             >>> features["layer1"].shape
             torch.Size([1, 64, 56, 56])
         """
-        if self.output_fmt == "NLC":
+        if self._uses_intermediates:
             return self._forward_nlc(inputs)
 
         if self.requires_grad:
@@ -274,16 +315,17 @@ class TimmFeatureExtractor(nn.Module):
         return features
 
     def _forward_nlc(self, inputs: torch.Tensor) -> dict[str, torch.Tensor]:
-        """Extract token-sequence features via timm's ``forward_intermediates``.
+        """Extract transformer features via timm's ``forward_intermediates``.
 
         Args:
             inputs (torch.Tensor): Input tensor of shape ``(B, C, H, W)``.
 
         Returns:
-            dict[str, torch.Tensor]: Mapping of block layer names to token tensors.
-                Each tensor has shape ``(B, N, D)`` (patch tokens), or
-                ``(B, P + N, D)`` with the ``[CLS, reg..., patches]`` prefix tokens
-                prepended when ``return_class_token`` is ``True``.
+            dict[str, torch.Tensor]: Mapping of block layer names to feature tensors.
+                With ``output_fmt="NLC"`` each tensor has shape ``(B, N, D)`` (patch
+                tokens), or ``(B, P + N, D)`` with the ``[CLS, reg..., patches]`` prefix
+                tokens prepended when ``return_class_token`` is ``True``. With
+                ``output_fmt="NCHW"`` each tensor is a spatial map ``(B, D, H, W)``.
         """
         if self.requires_grad:
             intermediates = self._run_intermediates(inputs)
@@ -308,6 +350,6 @@ class TimmFeatureExtractor(nn.Module):
             indices=self.idx,
             norm=self.norm,
             return_prefix_tokens=self.return_class_token,
-            output_fmt="NLC",
+            output_fmt=self.output_fmt,
             intermediates_only=True,
         )
