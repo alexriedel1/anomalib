@@ -83,7 +83,7 @@ class DinoV3Backbone(nn.Module):
             return self.dino.forward_intermediates(
                 x,
                 indices=self.layers,
-                norm=False,
+                norm=True,
                 output_fmt="NLC",
                 intermediates_only=True,
             )
