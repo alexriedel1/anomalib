@@ -170,7 +170,7 @@ class Patchcore(MemoryBankMixin, AnomalibModule):
             precision = PrecisionType(precision.lower())
 
         if precision == PrecisionType.FLOAT16:
-            self.model = self.model.half()
+            self.model = self.model.bfloat16()
         elif precision == PrecisionType.FLOAT32:
             self.model = self.model.float()
         else:
