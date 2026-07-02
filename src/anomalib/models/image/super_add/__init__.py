@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2025 Intel Corporation
+# Copyright (C) 2026 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
 
 """SuperADD: PatchCore-style anomaly detection on a DINOv3 backbone.
@@ -11,12 +11,12 @@ subsampling, and test images are scored by nearest-neighbor distance to the
 bank.
 
 Example:
-    >>> from anomalib.data import MVTecAD
+    >>> from anomalib.data import MVTecAD2
     >>> from anomalib.models import SuperADD
     >>> from anomalib.engine import Engine
 
     >>> # Initialize model and data
-    >>> datamodule = MVTecAD()
+    >>> datamodule = MVTecAD2()
     >>> model = SuperADD()
 
     >>> # Train using the Engine
