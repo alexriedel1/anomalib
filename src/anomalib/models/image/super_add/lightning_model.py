@@ -88,8 +88,8 @@ class SuperADD(MemoryBankMixin, AnomalibModule):
             averaged into the image-level score. Defaults to ``1e-3``.
         precision (str | PrecisionType, optional): Precision type for model
             computations. Can be either a string (``"float32"``, ``"float16"``)
-            or a :class:`PrecisionType` enum value.
-            Defaults to ``PrecisionType.FLOAT32``.
+            or a :class:`PrecisionType` enum value. ``"float16"`` runs the
+            model in ``torch.bfloat16``. Defaults to ``PrecisionType.FLOAT32``.
         pre_processor (nn.Module | bool, optional): Pre-processor instance or
             bool flag. Defaults to ``True``.
         post_processor (nn.Module | bool, optional): Post-processor instance or
@@ -165,7 +165,7 @@ class SuperADD(MemoryBankMixin, AnomalibModule):
             precision = PrecisionType(precision.lower())
 
         if precision == PrecisionType.FLOAT16:
-            self.model = self.model.half()
+            self.model = self.model.bfloat16()
         elif precision == PrecisionType.FLOAT32:
             self.model = self.model.float()
         else:
