@@ -1,399 +1,83 @@
-<div align="center">
+# anomalib — qbox fork (`anomalib-qbox2`)
 
-<img src="https://raw.githubusercontent.com/open-edge-platform/anomalib/main/docs/source/_static/images/logos/anomalib-wide-blue.png" width="600px" alt="Anomalib Logo - A deep learning library for anomaly detection">
+This is a fork of [anomalib](https://github.com/open-edge-platform/anomalib), the anomaly detection
+library by Intel / Open Edge Platform. For documentation, installation and the list of models, see
+the [upstream repository](https://github.com/open-edge-platform/anomalib) and
+[its docs](https://anomalib.readthedocs.io/en/latest/). The code is licensed under the upstream
+[Apache-2.0 license](LICENSE).
 
-**A library for benchmarking, developing and deploying deep learning anomaly detection algorithms**
+The `anomalib-qbox2` branch tracks upstream `main` and adds the changes qbox needs. This README
+lists them. **Every change below has to survive merges from upstream `main`.**
 
----
+## How qbox uses this branch
 
-[Key Features](#key-features) •
-[Docs](https://anomalib.readthedocs.io/en/latest/) •
-[Notebooks](examples/notebooks) •
-[License](LICENSE)
+- qboxv2 installs anomalib from git, pinned to a **commit** of this branch in `qboxv2/uv.lock`. A
+  change here does not reach qbox until you push it and bump that pin.
+- Each qbox model spec (`qbox/training/specs.py`) builds its anomalib model. qbox passes
+  `precision="float16"` and expects it to run in **bfloat16** (see below).
+- qbox trains on folders of normal images only. Validation and test sets come from synthetic
+  anomalies (`TestSplitMode.SYNTHETIC`), with the blend factor set by the expected-severity option.
 
-![python](https://img.shields.io/badge/python-3.10%2B-green)
-![pytorch](https://img.shields.io/badge/pytorch-2.6%2B-orange)
-![lightning](https://img.shields.io/badge/lightning-2.2%2B-blue)
-![openvino](https://img.shields.io/badge/openvino-2024.0%2B-purple)
-
-[![Pre-Merge Checks](https://github.com/open-edge-platform/anomalib/actions/workflows/pre_merge.yml/badge.svg)](https://github.com/open-edge-platform/anomalib/actions/workflows/pre_merge.yml)
-[![codecov](https://codecov.io/gh/open-edge-platform/anomalib/branch/main/graph/badge.svg?token=Z6A07N1BZK)](https://codecov.io/gh/open-edge-platform/anomalib)
-[![Downloads](https://static.pepy.tech/personalized-badge/anomalib?period=total&units=international_system&left_color=grey&right_color=green&left_text=PyPI%20Downloads)](https://pepy.tech/project/anomalib)
-[![snyk](https://snyk.io/advisor/python/anomalib/badge.svg)](https://snyk.io/advisor/python/anomalib)
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8330/badge)](https://www.bestpractices.dev/projects/8330)
-
-[![ReadTheDocs](https://readthedocs.org/projects/anomalib/badge/?version=latest)](https://anomalib.readthedocs.io/en/latest/?badge=latest)
-[![Anomalib - Gurubase docs](https://img.shields.io/badge/Gurubase-Ask%20Anomalib%20Guru-006BFF)](https://gurubase.io/g/anomalib)
-
-<a href="https://trendshift.io/repositories/14514" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/14514" alt="open-edge-platform%2Fanomalib | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-
-</div>
-
----
-
-> 🌟 **Announcing v2.6.2 Release!** 🌟
->
-> This patch release hardens `Tabular.from_file()` by restricting it to safe, data-only file formats.
->
-> Key Changes
->
-> - **Security / API change**: `Tabular.from_file()` now only accepts `csv`, `json`, and `parquet`. Formats such as `pickle` and `hdf` are rejected because loading them can execute arbitrary code. Load those files yourself and pass a DataFrame to `Tabular(...)`.
->
-> We value your input! Please share feedback via [GitHub Issues](https://github.com/open-edge-platform/anomalib/issues) or our [Discussions](https://github.com/open-edge-platform/anomalib/discussions)
-
-# 👋 Introduction
-
-Anomalib is a deep learning library that aims to collect state-of-the-art anomaly detection algorithms for benchmarking on both public and private datasets. Anomalib provides several ready-to-use implementations of anomaly detection algorithms described in the recent literature, as well as a set of tools that facilitate the development and implementation of custom models. The library has a strong focus on visual anomaly detection, where the goal of the algorithm is to detect and/or localize anomalies within images or videos in a dataset. Anomalib is constantly updated with new algorithms and training/inference extensions, so keep checking!
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/open-edge-platform/anomalib/main/docs/source/_static/images/readme.png" width="1000" alt="A prediction made by anomalib">
-</p>
-
-## Key features
-
-- Simple and modular API and CLI for training, inference, benchmarking, and hyperparameter optimization.
-- The largest public collection of ready-to-use deep learning anomaly detection algorithms and benchmark datasets.
-- [**Lightning**](https://www.lightning.ai/) based model implementations to reduce boilerplate code and limit the implementation efforts to the bare essentials.
-- The majority of models can be exported to [**OpenVINO**](https://www.intel.com/content/www/us/en/developer/tools/openvino-toolkit/overview.html) Intermediate Representation (IR) for accelerated inference on Intel hardware.
-- A set of [inference tools](tools) for quick and easy deployment of the standard or custom anomaly detection models.
-
-# 📦 Installation
-
-Anomalib can be installed from PyPI. We recommend using a virtual environment and a modern package installer like `uv` or `pip`.
-
-## 🚀 Quick Install
-
-For a standard installation, you can use `uv` or `pip`. This will install the latest version of Anomalib with its core dependencies. PyTorch will be installed based on its default behavior, which usually works for CPU and standard CUDA setups.
+Upstream baseline at the last merge: `7d2a8ead` (`chore(lib): bump to dev (#3791)`). To list every
+change against upstream:
 
 ```bash
-# With uv
-uv pip install anomalib
-
-# Or with pip
-pip install anomalib
+git fetch https://github.com/open-edge-platform/anomalib.git main
+git diff FETCH_HEAD anomalib-qbox2 -- src tests
 ```
 
-For more control over the installation, such as specifying the PyTorch backend (e.g., XPU, CUDA and ROCm) or installing extra dependencies for specific models, see the advanced options below.
-
-<details>
-<summary><strong>💡 Advanced Installation: Specify Hardware Backend</strong></summary>
-
-To ensure compatibility with your hardware, you can specify a backend during installation. This is the recommended approach for production environments and for hardware other than CPU or standard CUDA.
-
-**Using `uv`:**
-
-```bash
-# CPU support (default, works on all platforms)
-uv pip install "anomalib[cpu]"
-
-# CUDA 12.6 support (Linux/Windows with NVIDIA GPU)
-uv pip install "anomalib[cu126]"
-
-# CUDA 13.0 support (Linux/Windows with NVIDIA GPU)
-uv pip install "anomalib[cu130]"
-
-# ROCm support (Linux with AMD GPU)
-uv pip install "anomalib[rocm]"
-
-# Intel XPU support (Linux with Intel GPU)
-uv pip install "anomalib[xpu]"
-```
-
-**Using `pip`:**
-The same extras can be used with `pip`:
-
-```bash
-pip install "anomalib[cu130]"
-```
-
-</details>
-
-<details>
-<summary><strong>🧩 Advanced Installation: Additional Dependencies</strong></summary>
-
-Anomalib includes most dependencies by default. For specialized features, you may need additional optional dependencies. Remember to include your hardware-specific extra.
-
-```bash
-# Example: Install with OpenVINO support and CUDA 13.0
-uv pip install "anomalib[openvino,cu130]"
-
-# Example: Install all optional dependencies for a CPU-only setup
-uv pip install "anomalib[full,cpu]"
-```
-
-Here is a list of available optional dependency groups:
-
-| Extra         | Description                              | Purpose                                     |
-| :------------ | :--------------------------------------- | :------------------------------------------ |
-| `[openvino]`  | Intel OpenVINO optimization              | For accelerated inference on Intel hardware |
-| `[clip]`      | Vision-language models                   | `winclip`                                   |
-| `[vlm]`       | Vision-language model backends           | Advanced VLM features                       |
-| `[loggers]`   | Experiment tracking (wandb, comet, etc.) | For experiment management                   |
-| `[notebooks]` | Jupyter notebook support                 | For running example notebooks               |
-| `[full]`      | All optional dependencies                | All optional features                       |
-
-</details>
-
-<details>
-<summary><strong>🔧 Advanced Installation: Install from Source</strong></summary>
-
-For contributing to `anomalib` or using a development version, you can install from source.
-
-**Using `uv`:**
-This is the recommended method for developers as it uses the project's lock file for reproducible environments.
-
-```bash
-git clone https://github.com/open-edge-platform/anomalib.git
-cd anomalib
-
-# Create the virtual environment
-uv venv
-
-# Sync with the lockfile for a specific backend (e.g., CPU)
-uv sync --extra cpu
-
-# Or for a different backend like CUDA 13.0
-uv sync --extra cu130
-
-# To set up a full development environment
-uv sync --extra dev --extra cpu
-```
-
-**Using `pip`:**
-
-```bash
-git clone https://github.com/open-edge-platform/anomalib.git
-cd anomalib
-
-# Install in editable mode with a specific backend
-pip install -e ".[cpu]"
-
-# Install with development dependencies
-pip install -e ".[dev,cpu]"
-```
-
-</details>
-
-# 🧠 Training
-
-Anomalib supports both API and CLI-based training approaches:
-
-## 🔌 Python API
-
-```python
-from anomalib.data import MVTecAD
-from anomalib.models import Patchcore
-from anomalib.engine import Engine
-
-# Initialize components
-datamodule = MVTecAD()
-model = Patchcore()
-engine = Engine()
-
-# Train the model
-engine.fit(datamodule=datamodule, model=model)
-```
-
-## ⌨️ Command Line
-
-```bash
-# Train with default settings
-anomalib train --model Patchcore --data anomalib.data.MVTecAD
-
-# Train with custom category
-anomalib train --model Patchcore --data anomalib.data.MVTecAD --data.category transistor
-
-# Train with config file
-anomalib train --config path/to/config.yaml
-```
-
-# 🤖 Inference
-
-Anomalib provides multiple inference options including Torch, Lightning, Gradio, and OpenVINO. Here's how to get started:
-
-## 🔌 Python API
-
-```python
-# Load model and make predictions
-predictions = engine.predict(
-    datamodule=datamodule,
-    model=model,
-    ckpt_path="path/to/checkpoint.ckpt",
-)
-```
-
-## ⌨️ Command Line
-
-```bash
-# Basic prediction
-anomalib predict --model anomalib.models.Patchcore \
-                 --data anomalib.data.MVTecAD \
-                 --ckpt_path path/to/model.ckpt
-
-# Prediction with results
-anomalib predict --model anomalib.models.Patchcore \
-                 --data anomalib.data.MVTecAD \
-                 --ckpt_path path/to/model.ckpt \
-                 --return_predictions
-```
-
-> 📘 **Note:** For advanced inference options including Gradio and OpenVINO, check our [Inference Documentation](https://anomalib.readthedocs.io).
-
-# Training on Intel GPUs
-
-> [!Note]
-> Currently, only single GPU training is supported on Intel GPUs.
-> These commands were tested on Arc 750 and Arc 770.
-
-Ensure that you have PyTorch with XPU support installed. For more information, please refer to the [PyTorch XPU documentation](https://pytorch.org/docs/stable/notes/get_start_xpu.html)
-
-## 🔌 API
-
-```python
-from anomalib.data import MVTecAD
-from anomalib.engine import Engine, SingleXPUStrategy, XPUAccelerator
-from anomalib.models import Stfpm
-
-engine = Engine(
-    strategy=SingleXPUStrategy(),
-    accelerator=XPUAccelerator(),
-)
-engine.train(Stfpm(), datamodule=MVTecAD())
-```
-
-## ⌨️ CLI
-
-```bash
-anomalib train --model Padim --data MVTecAD --trainer.accelerator xpu --trainer.strategy xpu_single
-```
-
-# ⚙️ Hyperparameter Optimization
-
-Anomalib supports hyperparameter optimization (HPO) using [Weights & Biases](https://wandb.ai/) and [Comet.ml](https://www.comet.com/).
-
-```bash
-# Run HPO with Weights & Biases
-anomalib hpo --backend WANDB --sweep_config tools/hpo/configs/wandb.yaml
-```
-
-> 📘 **Note:** For detailed HPO configuration, check our [HPO Documentation](https://open-edge-platform.github.io/anomalib/tutorials/hyperparameter_optimization.html).
-
-# 🧪 Experiment Management
-
-Track your experiments with popular logging platforms through [PyTorch Lightning loggers](https://pytorch-lightning.readthedocs.io/en/stable/extensions/logging.html):
-
-- 📊 Weights & Biases
-- 📈 Comet.ml
-- 📉 TensorBoard
-
-Enable logging in your config file to track:
-
-- Hyperparameters
-- Metrics
-- Model graphs
-- Test predictions
-
-> 📘 **Note:** For logging setup, see our [Logging Documentation](https://anomalib.readthedocs.io/en/latest/markdown/guides/reference/loggers/index.html).
-
-# 📊 Benchmarking
-
-Evaluate and compare model performance across different datasets:
-
-```bash
-# Run benchmarking with default configuration
-anomalib benchmark --config tools/experimental/benchmarking/sample.yaml
-```
-
-> 💡 **Tip:** Check individual model performance in their respective README files:
->
-> - [Patchcore Results](src/anomalib/models/image/patchcore/README.md#mvtec-ad-dataset)
-> - [Other Models](src/anomalib/models/)
-
-# Anomalib Studio
-
-> [!IMPORTANT]
-> Anomalib Studio is currently under active development and should be considered a pre-release. Features may change, and some functionality may be incomplete or unstable. We welcome feedback and contributions as we work towards a stable release.
-
-Anomalib Studio is a low/no-code web application that allows users to train and deploy anomaly detection models. It enables users to leverage Anomalib's features in their operational environment. Users can connect USB and IP cameras, or use a folder of images, as input to the training pipeline. The tool allows direct output to their industrial pipelines through ROS messages, MQTT, etc.
-
-<p align="center">
-  <img src="docs/source/_static/images/anomalib_studio.png" alt="Anomalib Studio" />
-</p>
-
-The source code for Anomalib Studio lives in the [application](application) folder.
-
-Anomalib Studio is available as two distributions:
-
-1. As a [docker container](application/docker)
-2. As a [standalone application](application/ui)
-
-For more information on each, refer to the respective README files.
-
-## Get started with development build
-
-### Setup Backend Dependencies
-
-> [!NOTE]
-> This assumes that you have `uv` installed. If not, please refer to the [installation guide](https://docs.astral.sh/uv/getting-started/installation/).
-
-```bash
-cd application/backend
-uv sync --extra xpu # or uv sync --extra cu130 for CUDA 13.0, uv sync --extra cpu for CPU
-```
-
-### Setup Frontend Dependencies
-
-```bash
-cd application/ui
-npm install
-```
-
-### Run the application
-
-> [!IMPORTANT]
-> Both backend and frontend dependencies should be installed before running the application.
-
-Run the backend server:
-
-```bash
-cd application/backend
-./run.sh
-```
-
-Run the frontend server:
-
-```bash
-cd application/ui
-npm run start
-```
-
-Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
-
-# ✍️ Reference
-
-If you find Anomalib useful in your research or work, please cite:
-
-```tex
-@inproceedings{akcay2022anomalib,
-  title={Anomalib: A deep learning library for anomaly detection},
-  author={Akcay, Samet and Ameln, Dick and Vaidya, Ashwin and Lakshmanan, Barath and Ahuja, Nilesh and Genc, Utku},
-  booktitle={2022 IEEE International Conference on Image Processing (ICIP)},
-  pages={1706--1710},
-  year={2022},
-  organization={IEEE}
-}
-```
-
-# 👥 Contributing
-
-We welcome contributions! Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
-
-<p align="center">
-  <a href="https://github.com/open-edge-platform/anomalib/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=open-edge-platform/anomalib" alt="Contributors to open-edge-platform/anomalib" />
-  </a>
-</p>
-
-<p align="center">
-  <b>Thank you to all our contributors!</b>
-</p>
+## Changes not in upstream `main`
+
+### 1. Configurable synthetic anomalies
+
+Upstream hardcodes the anomaly texture source (`./datasets/dtd`) and the blend factor
+(`(0.01, 0.2)`) inside `make_synthetic_dataset`. qbox sets both per training.
+
+| File                                            | Change                                                                                                                                                                                                                     |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/anomalib/data/datamodules/base/image.py`   | `AnomalibDataModule` accepts `anomaly_source_path` and `anomaly_blend_factor` and passes them to `SyntheticAnomalyDataset.from_dataset` for synthetic val and test splits.                                                 |
+| `src/anomalib/data/datamodules/image/folder.py` | `Folder` exposes the same two arguments (default blend `(0.03, 0.07)`).                                                                                                                                                    |
+| `src/anomalib/data/utils/synthetic.py`          | `SyntheticAnomalyDataset` builds the `PerlinAnomalyGenerator` from those arguments and hands it to `make_synthetic_dataset`. Generation uses `tqdm` `progress_apply`, which qbox hooks to drive its training progress bar. |
+| `src/anomalib/data/datasets/image/folder.py`    | `make_folder_dataset` always sets the task to `segmentation`, so pixel metrics run on folders that have no masks but get synthetic ones.                                                                                   |
+
+### 2. `precision="float16"` runs in bfloat16
+
+float16 overflows on these backbones: un-normalized DINOv3 features reach about 1e4, beyond float16's
+maximum of 65504. That puts NaNs in the memory bank and makes every threshold NaN, so F1 is 0 while
+AUROC still looks normal. bfloat16 has float32's range. Upstream uses `.half()`; this fork maps
+`PrecisionType.FLOAT16` to bfloat16.
+
+| File                                                        | Change                                                                                                                                                      |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/anomalib/models/image/patchcore/lightning_model.py`    | `FLOAT16` → `.bfloat16()`. Also contains an unused `configure_precision` helper.                                                                            |
+| `src/anomalib/models/image/anomaly_dino/lightning_model.py` | `FLOAT16` → `.bfloat16()`.                                                                                                                                  |
+| `src/anomalib/models/image/super_add/lightning_model.py`    | `FLOAT16` → `.bfloat16()`.                                                                                                                                  |
+| `src/anomalib/models/image/efficient_ad/lightning_model.py` | New `precision` argument (`configure_precision`, bfloat16 for `FLOAT16`), quantiles computed in float32, default input size `768x768` instead of `256x256`. |
+| `src/anomalib/models/image/efficient_ad/torch_model.py`     | Inputs cast to the network dtype; ImageNet normalization tensors follow the input dtype.                                                                    |
+| `src/anomalib/models/components/filters/blur.py`            | `GaussianBlur2d` convolves in float32 so it works with half-precision anomaly maps.                                                                         |
+| `src/anomalib/models/image/patchcore/anomaly_map.py`        | Anomaly-map smoothing uses `kornia.filters.gaussian_blur2d` instead of `GaussianBlur2d`.                                                                    |
+
+### 3. SuperADD: RADIO backbone, capped threshold, exportable models
+
+| File                                                               | Change                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/anomalib/models/image/super_add/components/radio.py` (new)    | `RadioBackbone` loads NVIDIA C-RADIOv4 (`c-radio_v4-h`, `c-radio_v4-so400m`) through `torch.hub` and presents the same interface as `DinoV3Backbone`. `make_bound_methods_picklable` rebinds the methods RADIO attaches to the model instance, so a torch-exported model can be loaded again by `TorchInferencer`. Without it, loading fails with `'VisionTransformer' object has no attribute '_forward_cpe'`. |
+| `src/anomalib/models/image/super_add/components/__init__.py` (new) | Exports `RadioBackbone` and `is_radio_backbone`.                                                                                                                                                                                                                                                                                                                                                                |
+| `src/anomalib/models/image/super_add/torch_model.py`               | `SuperADDModel` selects `RadioBackbone` for RADIO names, `DinoV3Backbone` otherwise.                                                                                                                                                                                                                                                                                                                            |
+| `src/anomalib/models/image/super_add/lightning_model.py`           | For RADIO, the default pre-processor skips ImageNet normalization (RADIO expects `[0, 1]`) and the default post-processor uses the `capped` threshold. `configure_pre_processor` has a `normalize` argument.                                                                                                                                                                                                    |
+| `src/anomalib/models/image/super_add/post_processor.py`            | `pixel_threshold_method="capped"`: `min(p95 * 1.421, p50 + k * (max - p50))` with `pixel_threshold_cap_k=0.98`. The original `p95 * 1.421` rule sets RADIO's threshold above every normal pixel. The default stays `scaled_percentile`.                                                                                                                                                                         |
+| `tests/unit/models/image/super_add/test_super_add.py`              | Tests for patch stitching, percentile and capped thresholds, RADIO geometry and pre-processing, and pickling of bound methods.                                                                                                                                                                                                                                                                                  |
+
+Known limitation: loading an exported RADIO model still requires RADIO's hub code to be imported
+(`torch.hub.load("NVlabs/RADIO", ...)`), because its classes live in the hub cache. qbox's startup
+model check does that; a bare Python process gets `No module named 'radio'`.
+
+## Keeping the changes when merging upstream
+
+1. `git fetch https://github.com/open-edge-platform/anomalib.git main && git merge FETCH_HEAD`.
+2. Check conflicts in the files listed above in particular. Upstream edits the same precision
+   blocks (`.half()`) and SuperADD files, and a clean merge can still silently revert
+   `bfloat16()` to `.half()`. That is how the SuperADD NaN regression reached qbox.
+3. Run `uv run --extra cu130 --extra test python -m pytest tests/unit/models/image/super_add`.
+4. Push, then bump the anomalib commit in `qboxv2/uv.lock` and retrain the affected models. Old
+   exported `.pt` files are not rewritten.
