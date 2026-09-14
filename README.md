@@ -11,10 +11,10 @@
 [Notebooks](examples/notebooks) •
 [License](LICENSE)
 
-[![python](https://img.shields.io/badge/python-3.10%2B-green)]()
-[![pytorch](https://img.shields.io/badge/pytorch-2.6%2B-orange)]()
-[![lightning](https://img.shields.io/badge/lightning-2.2%2B-blue)]()
-[![openvino](https://img.shields.io/badge/openvino-2024.0%2B-purple)]()
+![python](https://img.shields.io/badge/python-3.10%2B-green)
+![pytorch](https://img.shields.io/badge/pytorch-2.6%2B-orange)
+![lightning](https://img.shields.io/badge/lightning-2.2%2B-blue)
+![openvino](https://img.shields.io/badge/openvino-2024.0%2B-purple)
 
 [![Pre-Merge Checks](https://github.com/open-edge-platform/anomalib/actions/workflows/pre_merge.yml/badge.svg)](https://github.com/open-edge-platform/anomalib/actions/workflows/pre_merge.yml)
 [![codecov](https://codecov.io/gh/open-edge-platform/anomalib/branch/main/graph/badge.svg?token=Z6A07N1BZK)](https://codecov.io/gh/open-edge-platform/anomalib)
@@ -31,16 +31,13 @@
 
 ---
 
-> 🌟 **Announcing v2.5.0 Release!** 🌟
+> 🌟 **Announcing v2.6.2 Release!** 🌟
 >
-> This release introduces four new anomaly detection models!
+> This patch release hardens `Tabular.from_file()` by restricting it to safe, data-only file formats.
 >
 > Key Changes
 >
-> - **INP-Former**: Intrinsic Normal Prototypes for universal anomaly detection.
-> - **GLASS**: A unified anomaly synthesis strategy with gradient ascent for industrial anomaly detection and localization.
-> - **AnomalyVFM**: Zero-shot anomaly detection with Vision Foundation Models.
-> - **CFM**: Cross-modal Feature Mapping for 3D anomaly detection.
+> - **Security / API change**: `Tabular.from_file()` now only accepts `csv`, `json`, and `parquet`. Formats such as `pickle` and `hdf` are rejected because loading them can execute arbitrary code. Load those files yourself and pass a DataFrame to `Tabular(...)`.
 >
 > We value your input! Please share feedback via [GitHub Issues](https://github.com/open-edge-platform/anomalib/issues) or our [Discussions](https://github.com/open-edge-platform/anomalib/discussions)
 
@@ -296,7 +293,7 @@ Enable logging in your config file to track:
 - Model graphs
 - Test predictions
 
-> 📘 **Note:** For logging setup, see our [Logging Documentation](https://open-edge-platform.github.io/anomalib/tutorials/logging.html).
+> 📘 **Note:** For logging setup, see our [Logging Documentation](https://anomalib.readthedocs.io/en/latest/markdown/guides/reference/loggers/index.html).
 
 # 📊 Benchmarking
 
@@ -313,6 +310,9 @@ anomalib benchmark --config tools/experimental/benchmarking/sample.yaml
 > - [Other Models](src/anomalib/models/)
 
 # Anomalib Studio
+
+> [!IMPORTANT]
+> Anomalib Studio is currently under active development and should be considered a pre-release. Features may change, and some functionality may be incomplete or unstable. We welcome feedback and contributions as we work towards a stable release.
 
 Anomalib Studio is a low/no-code web application that allows users to train and deploy anomaly detection models. It enables users to leverage Anomalib's features in their operational environment. Users can connect USB and IP cameras, or use a folder of images, as input to the training pipeline. The tool allows direct output to their industrial pipelines through ROS messages, MQTT, etc.
 

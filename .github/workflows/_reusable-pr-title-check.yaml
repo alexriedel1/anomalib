@@ -61,17 +61,17 @@ jobs:
       contents: read # Required to checkout the repository
     steps:
       - name: Harden the runner (audit all outbound calls)
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        uses: step-security/harden-runner@05e31511f85b41b11d1cf0ef85d0992719546e2c # v2.21.0
         with:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: ${{ inputs.python-version }}
           cache: pip
@@ -94,7 +94,7 @@ jobs:
 
           # Remove emoji from the beginning if present and create clean title for validation
           # Use Python for reliable emoji removal (more compatible than sed with Unicode)
-          CLEAN_TITLE=$(python3 -c "import re; title='$PR_TITLE'; print(re.sub(r'^[\s]*[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF\U0001F1E0-\U0001F1FF\U00002600-\U000027BF\U0001F900-\U0001F9FF]+[\s]*', '', title))")
+          CLEAN_TITLE=$(python3 -c "import os, re; title=os.environ['PR_TITLE']; print(re.sub(r'^[\s]*[\U0001F600-\U0001F64F\U0001F300-\U0001F5FF\U0001F680-\U0001F6FF\U0001F1E0-\U0001F1FF\U00002600-\U000027BF\U0001F900-\U0001F9FF]+[\s]*', '', title))")
 
           echo "Clean title for validation: '$CLEAN_TITLE'"
 

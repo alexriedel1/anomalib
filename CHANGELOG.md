@@ -14,15 +14,110 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- ⚠️ **deps**: Remove `cu118` install extra by @AlexanderBarabanov in https://github.com/open-edge-platform/anomalib/pull/3652
-
 ### Changed
-
-- 🔧 **deps**: Bump minimum `torch` and `torchvision` versions for the `xpu` install extra by @AlexanderBarabanov in https://github.com/open-edge-platform/anomalib/pull/3652
 
 ### Deprecated
 
 ### Fixed
+
+## [v2.6.2] - 2026-09-11
+
+### Added
+
+### Removed
+
+### Changed
+
+- ⚠️ **data**: `Tabular.from_file()` now only accepts `csv`, `json`, and `parquet`; `pickle`, `hdf`, and other pandas readers that can execute code are rejected. Load those formats yourself and pass a DataFrame to `Tabular(...)` by @ashwinvaidya17 in https://github.com/open-edge-platform/anomalib/pull/3782
+
+### Deprecated
+
+### Fixed
+
+## [v2.6.1] - 2026-09-04
+
+### Added
+
+### Removed
+
+### Changed
+
+- 🔄 **data**: Update Kaputt dataset source to the official Hugging Face repository (https://huggingface.co/datasets/amazon/kaputt) by @ashwinvaidya17 in https://github.com/open-edge-platform/anomalib/pull/3765
+- 🔧 **metric**: Optimize binary classification curve metric with PyTorch by @andersendsa in https://github.com/open-edge-platform/anomalib/pull/3720
+- 🔧 **model**: Use native padding in FastFlow by @andersendsa in https://github.com/open-edge-platform/anomalib/pull/3742
+- 🔧 **deps**: Bump `torch` by @AlexanderBarabanov in https://github.com/open-edge-platform/anomalib/pull/3722 and https://github.com/open-edge-platform/anomalib/pull/3752
+
+### Deprecated
+
+### Fixed
+
+- 🐞 **data**: Random tiling now honours the configured tile width instead of always producing square tiles by @ashwinvaidya17 in https://github.com/open-edge-platform/anomalib/pull/3772
+- 🐞 **security**: Block tar/zip path traversal on all supported Python versions by @ashwinvaidya17 in https://github.com/open-edge-platform/anomalib/pull/3769
+- 📚 **docs**: Fix broken documentation links by @godarrenw in https://github.com/open-edge-platform/anomalib/pull/3746
+- 🐞 **data**: Treat `seed=0` as a valid seed in `random_split` by @VenishPaneliya in https://github.com/open-edge-platform/anomalib/pull/3738
+- 🔧 **typing**: Remove type-only references to wandb's removed `RunDisabled` class by @dmitryduev in https://github.com/open-edge-platform/anomalib/pull/3739
+
+## [v2.6.0] - 2026-07-24
+
+### Added
+
+- 🚀 **model**: Add SuperADD VAND4.0 winning method by @alexriedel1 in https://github.com/open-edge-platform/anomalib/pull/3628
+- 🚀 **data**: Add AutoVI Dataset by @julie-bat in https://github.com/open-edge-platform/anomalib/pull/3633
+
+### Removed
+
+- ⚠️ **data**: Remove Kaputt deprecated APIs (`use_reference`, `reference_only`, `category='all'`); use `image_mode=ImageMode.*` and `category=None` / a concrete category (default `book_other`) instead
+- ⚠️ **metric**: Remove deprecated AUPRO `num_thresholds` constructor argument and unused `compute_pro(..., target=...)` parameter
+- ⚠️ **utils**: Remove temporary `resolve_with_warning` / `_is_legacy_default_root` helpers; use `resolve_dataset_root` instead
+
+### Changed
+
+- 🔧 **data**: Kaputt datamodule default `category` is now `book_other` (was the deprecated `all` pseudo-category)
+
+### Deprecated
+
+### Fixed
+
+- 🐞 **data**: Distribute split remainder over subsets to avoid ZeroDivisionError by @prawnsgupta in https://github.com/open-edge-platform/anomalib/pull/3680
+- 🐞 **security**: Fix path traversal by @AlexanderBarabanov in https://github.com/open-edge-platform/anomalib/pull/3686
+- 🔧 **deps**: Bump `torch` to resolve Dependabot alerts by @AlexanderBarabanov in https://github.com/open-edge-platform/anomalib/pull/3681
+
+## [v2.5.1] - 2026-07-17
+
+### Added
+
+- 🚀 **model**: Migrate all DINOv2-based models to `timm` feature extraction with DINOv3 backbone support by @alexriedel1 in https://github.com/open-edge-platform/anomalib/pull/3627
+- 🚀 **model**: Add `output_fmt="NLC"` mode to `TimmFeatureExtractor` for transformer backbones via timm's `forward_intermediates` API by @alexriedel1 in https://github.com/open-edge-platform/anomalib/pull/3627
+- 🚀 **model**: INP-Former half-precision training support by @alexriedel1 in https://github.com/open-edge-platform/anomalib/pull/3625
+- 🚀 **docs**: Improve PatchCore backbone layer documentation by @rashidrao-pk in https://github.com/open-edge-platform/anomalib/pull/3630
+
+### Removed
+
+- ⚠️ **model**: Remove custom `DinoVisionTransformer`, `DinoV2Loader`, and Dinomaly's internal ViT implementation — replaced by timm-based extraction by @alexriedel1 in https://github.com/open-edge-platform/anomalib/pull/3627
+- ⚠️ **deps**: Remove `cu118` install extra by @AlexanderBarabanov in https://github.com/open-edge-platform/anomalib/pull/3652
+
+### Changed
+
+- 🔧 **deps**: Replace `opencv-python` with `opencv-python-headless` to support headless environments by @ashwinvaidya17 in https://github.com/open-edge-platform/anomalib/pull/3675
+- 🔧 **deps**: Bump minimum `torch` and `torchvision` versions for the `xpu` install extra by @AlexanderBarabanov in https://github.com/open-edge-platform/anomalib/pull/3652
+- 🔧 **deps**: Remove upper bound on `torch` for `cpu`, `cu126`, and `rocm` install extras to unblock Python 3.14 wheel resolution by @ashwinvaidya17 in https://github.com/open-edge-platform/anomalib/pull/3554
+- 🔧 **model**: AnomalyDINO default `encoder_name` changed from `dinov2_vit_small_14` to `vit_small_patch14_dinov2` (timm naming) by @alexriedel1 in https://github.com/open-edge-platform/anomalib/pull/3627
+- 🔧 **model**: Dinomaly, INP-Former, L2BT, PatchFlow encoder parameters updated to use timm backbone names by @alexriedel1 in https://github.com/open-edge-platform/anomalib/pull/3627
+
+### Deprecated
+
+- ⚠️ **model**: `anomalib.models.components.dinov2` package emits `FutureWarning`, use `TimmFeatureExtractor` instead by @alexriedel1 in https://github.com/open-edge-platform/anomalib/pull/3627
+- ⚠️ **export**: Deprecate the legacy ONNX exporter path (`dynamo=False`) ahead of anomalib 2.7.0, where the minimum required PyTorch version will increase to 2.10 by @ashwinvaidya17 in https://github.com/open-edge-platform/anomalib/pull/3554
+
+### Fixed
+
+- 🐞 **data**: Update stale MVTec AD/3D download URLs and switch ShanghaiTech to manual-download (dead mirror) with user-facing instructions by @ashwinvaidya17 in https://github.com/open-edge-platform/anomalib/pull/3673
+- 🐞 **export**: Add `dynamic_shapes` support for torch dynamo ONNX/OpenVINO export while keeping the legacy exporter path available during the 2.7.0 transition by @ashwinvaidya17 in https://github.com/open-edge-platform/anomalib/pull/3554
+- 🐞 **data**: Normalize `Split` enum to string value before DataFrame comparison in dataset loaders for pandas 3.x compatibility by @won-seoop in https://github.com/open-edge-platform/anomalib/pull/3634 and https://github.com/open-edge-platform/anomalib/pull/3659
+- 🐞 **data**: Fix pandas 3 compatibility by @won-seoop in https://github.com/open-edge-platform/anomalib/pull/3668
+- 🐞 **typing**: Pin mypy `python_version` to 3.10 to fix spurious dataclass `__replace__` incompatibility errors under Python 3.13 by @ashwinvaidya17 in https://github.com/open-edge-platform/anomalib/pull/3674
+- 🐞 **model**: Remove CPU-GPU synchronization in coreset selection loop by @andersendsa in https://github.com/open-edge-platform/anomalib/pull/3651
+- 🐞 **build**: Remove non-redistributable CUDA files from CUDA and XPU container images by @AlexanderBarabanov in https://github.com/open-edge-platform/anomalib/pull/3614
 
 ## [v2.5.0] - 2026-05-28
 
