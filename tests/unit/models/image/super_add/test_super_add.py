@@ -16,7 +16,10 @@ from dataclasses import dataclass
 import pytest
 import torch
 from torch import nn
+from torchvision.transforms.v2 import Normalize, Resize
 
+from anomalib.models.image.super_add import SuperADD
+from anomalib.models.image.super_add.components import RadioBackbone
 from anomalib.models.image.super_add.post_processor import SuperADDPostProcessor
 from anomalib.models.image.super_add.torch_model import PatchedExecution
 
@@ -144,3 +147,89 @@ def test_percentile_post_processor_thresholds() -> None:
     # normalization statistics must still be computed by the base class
     assert post_processor.pixel_max.item() == all_pixels.max().item()
     assert post_processor.image_min.item() == all_scores.min().item()
+
+
+def test_radio_backbone_geometry_without_weights() -> None:
+    """The geometry and default taps must resolve from the spec table, with no checkpoint."""
+    backbone = RadioBackbone("c-radio_v4-h", pretrained=False)
+
+    assert backbone.model_patch_size == 16
+    assert backbone.depth == 32
+    # the same taps the DINOv3 `huge` preset uses, so the two encoders are compared like for like
+    assert backbone.layers == [7, 15, 23, 31]
+    # a smaller backbone spaces its taps to its own depth
+    assert RadioBackbone("c-radio_v4-so400m", pretrained=False).layers == [5, 12, 19, 26]
+    # explicit layers win
+    assert RadioBackbone("c-radio_v4-h", layers=[31], pretrained=False).layers == [31]
+
+    with pytest.raises(RuntimeError, match="holds no weights"):
+        backbone(torch.zeros(1, 3, 32, 32))
+    with pytest.raises(ValueError, match="Unknown RADIO backbone"):
+        RadioBackbone("vit_huge_plus_patch16_dinov3", pretrained=False)
+    with pytest.raises(ValueError, match="must be non-empty indices"):
+        RadioBackbone("c-radio_v4-h", layers=[32], pretrained=False)
+
+
+#: Validation map with an exact median (0.30), maximum (0.60) and 95th percentile (0.57), so the
+#: arithmetic below is closed-form. The original rule gives 0.57 * 1.421 = 0.80997.
+CLEAN_VALIDATION_MAP = torch.linspace(0.0, 0.6, 128).reshape(2, 8, 8)
+SCALED_PERCENTILE_THRESHOLD = 0.57 * 1.421
+
+
+@pytest.mark.parametrize(
+    ("cap_k", "expected"),
+    [
+        # 0.30 + 0.8 * (0.60 - 0.30) = 0.54, below the original rule, so the cap binds
+        (0.8, 0.54),
+        (0.98, 0.30 + 0.98 * 0.30),
+        # the cap sits above the original rule, which therefore stands unchanged
+        (2.0, SCALED_PERCENTILE_THRESHOLD),
+    ],
+)
+def test_capped_pixel_threshold(cap_k: float, expected: float) -> None:
+    """The cap is one-sided: it may lower the original threshold, never raise it."""
+    post_processor = SuperADDPostProcessor(pixel_threshold_method="capped", pixel_threshold_cap_k=cap_k)
+
+    batch = DummyValidationBatch(anomaly_map=CLEAN_VALIDATION_MAP.clone(), pred_score=torch.rand(2))
+    post_processor.on_validation_batch_end(None, None, batch)
+    post_processor.on_validation_epoch_end(None, None)
+
+    assert post_processor._pixel_threshold.item() == pytest.approx(expected, abs=1e-5)  # noqa: SLF001
+    assert post_processor._pixel_threshold.item() <= SCALED_PERCENTILE_THRESHOLD + 1e-6  # noqa: SLF001
+
+
+def test_capped_threshold_anchors_on_the_exact_maximum() -> None:
+    """The cap's anchor must be the true maximum over full maps, not the random pixel subsample."""
+    post_processor = SuperADDPostProcessor(
+        pixel_threshold_method="capped",
+        samples_per_batch=8,  # far below the 256 pixels per batch, so the subsample misses most
+    )
+
+    quiet = torch.full((1, 16, 16), 0.5)
+    spike = torch.full((1, 16, 16), 0.5)
+    spike[0, 0, 0] = 1.0
+    for anomaly_map in (spike, quiet):
+        post_processor.on_validation_batch_end(None, None, DummyValidationBatch(anomaly_map, torch.rand(1)))
+
+    # exact, and carried across batches rather than reset by the later quiet one
+    assert post_processor._pixel_score_max.item() == 1.0  # noqa: SLF001
+    # and it is released once consumed, so a second validation run starts clean
+    post_processor.on_validation_epoch_end(None, None)
+    assert post_processor._pixel_score_max is None  # noqa: SLF001
+
+
+def test_invalid_threshold_method_is_rejected() -> None:
+    """An unknown method must fail at construction rather than silently fall back."""
+    with pytest.raises(ValueError, match="Unknown pixel_threshold_method"):
+        SuperADDPostProcessor(pixel_threshold_method="aug_capped")
+
+
+def test_radio_pre_processor_skips_imagenet_normalization() -> None:
+    """RADIO standardizes its own input, so the default pre-processor must leave it in [0, 1]."""
+    default_transforms = SuperADD.configure_pre_processor().transform.transforms
+    radio_transforms = SuperADD.configure_pre_processor(normalize=False).transform.transforms
+
+    assert any(isinstance(transform, Normalize) for transform in default_transforms)
+    assert not any(isinstance(transform, Normalize) for transform in radio_transforms)
+    # the resize is kept either way
+    assert any(isinstance(transform, Resize) for transform in radio_transforms)

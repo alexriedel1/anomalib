@@ -46,6 +46,7 @@ from anomalib.post_processing import PostProcessor
 from anomalib.pre_processing import PreProcessor
 from anomalib.visualization import Visualizer
 
+from .components import is_radio_backbone
 from .post_processor import SuperADDPostProcessor
 from .torch_model import SuperADDModel
 
@@ -70,7 +71,9 @@ class SuperADD(MemoryBankMixin, AnomalibModule):
 
     Args:
         backbone (str): Name of the timm DINOv3 backbone used for feature
-            extraction. Defaults to ``"vit_huge_plus_patch16_dinov3"``.
+            extraction, or a RADIO backbone such as ``"c-radio_v4-h"``, which
+            also selects the ``[0, 1]`` pre-processor and the ``"capped"`` pixel
+            threshold it needs. Defaults to ``"vit_huge_plus_patch16_dinov3"``.
         patch_size (int): Side length (in pixels) of the overlapping patches the
             input image is split into before being passed to the backbone.
             Defaults to ``448``.
@@ -141,6 +144,14 @@ class SuperADD(MemoryBankMixin, AnomalibModule):
             visualizer=visualizer,
         )
 
+        if is_radio_backbone(backbone):
+            # Swapped after the base class built its own, so `save_hyperparameters` still records
+            # the plain `True` and a reloaded checkpoint rebuilds these the same way.
+            if pre_processor is True:
+                self.pre_processor = self.configure_pre_processor(normalize=False)
+            if post_processor is True:
+                self.post_processor = SuperADDPostProcessor(pixel_threshold_method="capped")
+
         self.model: SuperADDModel = SuperADDModel(
             layers=layers,
             backbone=backbone,
@@ -167,6 +178,7 @@ class SuperADD(MemoryBankMixin, AnomalibModule):
         cls,
         image_size: tuple[int, int] | None = None,
         center_crop_size: tuple[int, int] | None = None,
+        normalize: bool = True,
     ) -> PreProcessor:
         """Configure the default pre-processor for SuperADD.
 
@@ -178,6 +190,9 @@ class SuperADD(MemoryBankMixin, AnomalibModule):
                 resizing. Defaults to ``(448, 448)``.
             center_crop_size (tuple[int, int] | None, optional): Size for center
                 cropping. Defaults to ``None``.
+            normalize (bool, optional): Whether to apply ImageNet standardization.
+                Pass ``False`` for backbones that normalize their own input, such
+                as RADIO, which expects images in ``[0, 1]``. Defaults to ``True``.
 
         Returns:
             PreProcessor: Configured pre-processor instance.
@@ -194,22 +209,16 @@ class SuperADD(MemoryBankMixin, AnomalibModule):
         """
         image_size = image_size or (448, 448)
 
+        transforms = [Resize(image_size, antialias=True)]
         if center_crop_size is not None:
             if center_crop_size[0] > image_size[0] or center_crop_size[1] > image_size[1]:
                 msg = f"Center crop size {center_crop_size} cannot be larger than image size {image_size}."
                 raise ValueError(msg)
-            transform = Compose([
-                Resize(image_size, antialias=True),
-                CenterCrop(center_crop_size),
-                Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ])
-        else:
-            transform = Compose([
-                Resize(image_size, antialias=True),
-                Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-            ])
+            transforms.append(CenterCrop(center_crop_size))
+        if normalize:
+            transforms.append(Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]))
 
-        return PreProcessor(transform=transform)
+        return PreProcessor(transform=Compose(transforms))
 
     @staticmethod
     def configure_optimizers() -> None:

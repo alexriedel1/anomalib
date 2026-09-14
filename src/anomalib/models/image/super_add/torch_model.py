@@ -32,6 +32,8 @@ from tqdm import tqdm
 from anomalib.data import InferenceBatch
 from anomalib.models.components import DynamicBufferMixin, GaussianBlur2d
 
+from .components import RadioBackbone, is_radio_backbone
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_CHUNK_SIZE = 1024
@@ -252,7 +254,9 @@ class SuperADDModel(DynamicBufferMixin, nn.Module):
 
     Args:
         backbone (str): Name of the timm DINOv3 backbone used for feature
-            extraction. Defaults to ``"vit_small_patch16_dinov3"``.
+            extraction, or a RADIO backbone such as ``"c-radio_v4-h"``, which
+            expects images in ``[0, 1]``. Defaults to
+            ``"vit_small_patch16_dinov3"``.
         patch_size (int): Side length (in pixels) of the overlapping patches the
             input image is split into. Defaults to ``448``.
         patch_overlap (int): Overlap (in pixels) between neighboring patches.
@@ -273,7 +277,7 @@ class SuperADDModel(DynamicBufferMixin, nn.Module):
             resolution (number of tokens). Defaults to ``1e-3``.
 
     Attributes:
-        backbone (DinoV3Backbone): DINOv3 feature extractor.
+        backbone (DinoV3Backbone | RadioBackbone): Feature extractor.
         patch_exec (PatchedExecution): Overlapping-patch inference wrapper.
         layers (list[int]): Indices of the extracted backbone layers.
         memory_bank (torch.Tensor): Per-layer coreset of normal patch features.
@@ -301,25 +305,30 @@ class SuperADDModel(DynamicBufferMixin, nn.Module):
         super().__init__()
         self.backbone_name = backbone
 
-        if layers is None:
-            for arch_name, target_layers in DINO_TARGET_LAYERS.items():
-                if arch_name in backbone:
-                    self.layers = target_layers
-                    break
-            if not hasattr(self, "layers"):
-                msg = (
-                    f"Could not infer target layers for backbone '{backbone}'. "
-                    f"Known backbone keys: {sorted(DINO_TARGET_LAYERS.keys())}. "
-                    "Please pass `layers` explicitly."
-                )
-                raise ValueError(msg)
+        if is_radio_backbone(backbone):
+            # RADIO derives its taps from the checkpoint depth.
+            self.backbone: nn.Module = RadioBackbone(backbone, layers)
+            self.layers = self.backbone.layers
         else:
-            if not layers:
-                msg = "`layers` must be a non-empty list of encoder layer indices."
-                raise ValueError(msg)
-            self.layers = layers
+            if layers is None:
+                for arch_name, target_layers in DINO_TARGET_LAYERS.items():
+                    if arch_name in backbone:
+                        self.layers = target_layers
+                        break
+                if not hasattr(self, "layers"):
+                    msg = (
+                        f"Could not infer target layers for backbone '{backbone}'. "
+                        f"Known backbone keys: {sorted(DINO_TARGET_LAYERS.keys())}. "
+                        "Please pass `layers` explicitly."
+                    )
+                    raise ValueError(msg)
+            else:
+                if not layers:
+                    msg = "`layers` must be a non-empty list of encoder layer indices."
+                    raise ValueError(msg)
+                self.layers = layers
 
-        self.backbone = DinoV3Backbone(backbone, self.layers)
+            self.backbone = DinoV3Backbone(backbone, self.layers)
         self.patch_exec = PatchedExecution(self.backbone, patch_size, patch_overlap, self.backbone.model_patch_size)
         self.max_database_size = max_database_size
         self.subsampling_iterations = subsampling_iterations
