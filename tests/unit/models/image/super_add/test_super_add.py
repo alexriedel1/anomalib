@@ -10,8 +10,10 @@ overlap splitting, or the batch/patch reshaping shows up as a nonzero
 difference from the expected coordinate ramp.
 """
 
+import io
 import itertools
 from dataclasses import dataclass
+from types import MethodType
 
 import pytest
 import torch
@@ -20,6 +22,7 @@ from torchvision.transforms.v2 import Normalize, Resize
 
 from anomalib.models.image.super_add import SuperADD
 from anomalib.models.image.super_add.components import RadioBackbone
+from anomalib.models.image.super_add.components.radio import make_bound_methods_picklable
 from anomalib.models.image.super_add.post_processor import SuperADDPostProcessor
 from anomalib.models.image.super_add.torch_model import PatchedExecution
 
@@ -168,6 +171,36 @@ def test_radio_backbone_geometry_without_weights() -> None:
         RadioBackbone("vit_huge_plus_patch16_dinov3", pretrained=False)
     with pytest.raises(ValueError, match="must be non-empty indices"):
         RadioBackbone("c-radio_v4-h", layers=[32], pretrained=False)
+
+
+def _patched_forward(self: nn.Module, x: torch.Tensor) -> torch.Tensor:
+    """Stand-in for RADIO's ``_forward_cpe``, bound under a different attribute name."""
+    return self.linear(x) + 1
+
+
+def test_bound_methods_survive_pickling() -> None:
+    """RADIO binds functions onto its model instance; an exported model must still reload."""
+    inner = nn.Sequential()
+    inner.linear = nn.Linear(4, 4)
+    inner.forward_features = MethodType(_patched_forward, inner)
+    model = nn.ModuleDict({"inner": inner})
+    x = torch.rand(2, 4)
+
+    buffer = io.BytesIO()
+    torch.save(model, buffer)
+    buffer.seek(0)
+    with pytest.raises(AttributeError, match="_patched_forward"):
+        torch.load(buffer, weights_only=False)
+
+    make_bound_methods_picklable(model)
+    buffer = io.BytesIO()
+    torch.save(model, buffer)
+    buffer.seek(0)
+    loaded = torch.load(buffer, weights_only=False)
+
+    assert torch.equal(loaded["inner"].forward_features(x), model["inner"].forward_features(x))
+    # the rebound method must act on the reloaded module, not a stale copy
+    assert loaded["inner"].forward_features.args[0] is loaded["inner"]
 
 
 #: Validation map with an exact median (0.30), maximum (0.60) and 95th percentile (0.57), so the

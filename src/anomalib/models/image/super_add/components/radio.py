@@ -8,6 +8,9 @@ wrapped to present the same surface as
 :class:`~anomalib.models.image.super_add.torch_model.DinoV3Backbone`.
 """
 
+from functools import partial
+from types import MethodType
+
 import torch
 from torch import nn
 
@@ -23,6 +26,20 @@ RADIO_SPECS = {
 def is_radio_backbone(backbone: str) -> bool:
     """Whether ``backbone`` names a RADIO checkpoint rather than a timm model."""
     return backbone in RADIO_SPECS
+
+
+def make_bound_methods_picklable(model: nn.Module) -> None:
+    """Rebind methods attached to module instances so the model survives a pickle round trip.
+
+    RADIO's hub code attaches functions such as ``_forward_cpe`` to its timm model as bound methods.
+    A bound method pickles as a lookup of the function's own name on the instance, which the class
+    does not define, so a saved model fails to load with ``no attribute '_forward_cpe'``. A
+    ``partial`` pickles the function by its module-level reference instead.
+    """
+    for module in model.modules():
+        for name, value in list(vars(module).items()):
+            if isinstance(value, MethodType) and value.__self__ is module:
+                setattr(module, name, partial(value.__func__, module))
 
 
 class RadioBackbone(nn.Module):
@@ -52,6 +69,7 @@ class RadioBackbone(nn.Module):
         if pretrained:
             # `trust_repo` keeps torch.hub from prompting on stdin.
             self.model = torch.hub.load(RADIO_HUB_REPOSITORY, "radio_model", version=backbone, trust_repo=True)  # nosec B614
+            make_bound_methods_picklable(self.model)  # exported models must reload in TorchInferencer
             patch_size, depth = self.model.patch_size, len(self.model.blocks)
             # A plain attribute, so `.half()` would miss it and every batch would be re-cast back.
             self.model.input_conditioner.dtype = None
