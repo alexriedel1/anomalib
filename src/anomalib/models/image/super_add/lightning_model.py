@@ -86,6 +86,8 @@ class SuperADD(MemoryBankMixin, AnomalibModule):
             Defaults to ``4.0``.
         score_quantile (float): Fraction of the highest anomaly map pixels
             averaged into the image-level score. Defaults to ``1e-3``.
+        feature_norm (bool): Apply the DINOv3 backbone's final norm layer to the
+            intermediate features. Ignored for RADIO backbones. Defaults to ``False``.
         precision (str | PrecisionType, optional): Precision type for model
             computations. Can be either a string (``"float32"``, ``"float16"``)
             or a :class:`PrecisionType` enum value. ``"float16"`` runs the
@@ -131,6 +133,7 @@ class SuperADD(MemoryBankMixin, AnomalibModule):
         layers: list[int] | None = None,
         gaussian_blur_sigma: float = 4.0,
         score_quantile: float = 1e-3,
+        feature_norm: bool = False,
         precision: str | PrecisionType = PrecisionType.FLOAT32,
         pre_processor: nn.Module | bool = True,
         post_processor: nn.Module | bool = True,
@@ -159,6 +162,7 @@ class SuperADD(MemoryBankMixin, AnomalibModule):
             patch_overlap=patch_overlap,
             gaussian_blur_sigma=gaussian_blur_sigma,
             score_quantile=score_quantile,
+            feature_norm=feature_norm,
         )
 
         if isinstance(precision, str):

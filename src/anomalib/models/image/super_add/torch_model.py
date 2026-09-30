@@ -57,18 +57,22 @@ class DinoV3Backbone(nn.Module):
         backbone (str): Name of the timm DINOv3 model to instantiate.
         layers (list[int]): Indices of the intermediate transformer blocks whose
             token features should be returned.
+        feature_norm (bool): Apply the backbone's final norm layer to the
+            intermediate features. Defaults to ``False``.
 
     Attributes:
         dino (nn.Module): The underlying pretrained timm model.
         layers (list[int]): Indices of the extracted intermediate blocks.
+        feature_norm (bool): Whether the final norm is applied to the features.
         model_patch_size (int): Patch size of the ViT (pixels per token).
     """
 
-    def __init__(self, backbone: str, layers: list[int]) -> None:
+    def __init__(self, backbone: str, layers: list[int], feature_norm: bool = False) -> None:
         super().__init__()
 
         self.dino = timm.create_model(backbone, pretrained=True, num_classes=0).eval()
         self.layers = layers
+        self.feature_norm = feature_norm
         self.model_patch_size = self.dino.patch_embed.patch_size[0]
 
     def forward(self, x: torch.Tensor) -> list[torch.Tensor]:
@@ -85,7 +89,8 @@ class DinoV3Backbone(nn.Module):
             return self.dino.forward_intermediates(
                 x,
                 indices=self.layers,
-                norm=False,
+                # getattr: models pickled before this attribute existed used norm=False
+                norm=getattr(self, "feature_norm", False),
                 output_fmt="NLC",
                 intermediates_only=True,
             )
@@ -275,6 +280,8 @@ class SuperADDModel(DynamicBufferMixin, nn.Module):
             averaged into the image-level score. Using a small quantile instead
             of the single maximum keeps the score independent of the input
             resolution (number of tokens). Defaults to ``1e-3``.
+        feature_norm (bool): Apply the DINOv3 backbone's final norm layer to the
+            intermediate features. Ignored for RADIO backbones. Defaults to ``False``.
 
     Attributes:
         backbone (DinoV3Backbone | RadioBackbone): Feature extractor.
@@ -301,6 +308,7 @@ class SuperADDModel(DynamicBufferMixin, nn.Module):
         subsampling_iterations: int = 100,
         gaussian_blur_sigma: float = 4.0,
         score_quantile: float = 1e-3,
+        feature_norm: bool = False,
     ) -> None:
         super().__init__()
         self.backbone_name = backbone
@@ -328,7 +336,7 @@ class SuperADDModel(DynamicBufferMixin, nn.Module):
                     raise ValueError(msg)
                 self.layers = layers
 
-            self.backbone = DinoV3Backbone(backbone, self.layers)
+            self.backbone = DinoV3Backbone(backbone, self.layers, feature_norm=feature_norm)
         self.patch_exec = PatchedExecution(self.backbone, patch_size, patch_overlap, self.backbone.model_patch_size)
         self.max_database_size = max_database_size
         self.subsampling_iterations = subsampling_iterations
