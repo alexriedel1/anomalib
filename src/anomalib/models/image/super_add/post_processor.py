@@ -106,6 +106,28 @@ class SuperADDPostProcessor(PostProcessor):
         # underestimate, so it is tracked exactly over the full maps.
         self._pixel_score_max: torch.Tensor | None = None
 
+    @property
+    def _checkpoint_config_keys(self) -> tuple[str, ...]:
+        """Attribute names persisted by ``checkpoint_config``/``load_checkpoint_config``.
+
+        Extends the base :class:`~anomalib.post_processing.PostProcessor` keys
+        with SuperADD's percentile-based threshold configuration, so a
+        checkpoint saved with non-default values (e.g. a custom
+        ``pixel_threshold_factor``) restores them instead of silently
+        reverting to the constructor defaults.
+
+        Returns:
+            tuple[str, ...]: Attribute names to persist.
+        """
+        return (
+            *super()._checkpoint_config_keys,
+            "pixel_threshold_percentile",
+            "pixel_threshold_factor",
+            "image_threshold_percentile",
+            "image_threshold_factor",
+            "samples_per_batch",
+        )
+
     def on_validation_batch_end(self, trainer, pl_module, outputs, *args, **kwargs) -> None:  # noqa: ANN001
         """Collect normalization statistics and score samples for the percentile thresholds.
 
